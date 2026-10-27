@@ -31,11 +31,11 @@ The Grocery Business App is **one shared business ecosystem** with specialized i
 | APK artifact | **Available from workflow #8** | Split APK artifact uploaded successfully for `armeabi-v7a`, `arm64-v8a`, and `x86_64`. |
 | Product catalogue | **Implemented and CI-verified** | Create, view, edit, search, and deactivate product flows are implemented on `feature/product-catalogue-sqlite`; widget tests pass. |
 | SQLite persistence | **Implemented and real-device verified** | Product persistence smoke test has been completed successfully on the target Android device, including create → restart → edit → deactivate. |
-| Offline POS and sales recording | **Not implemented** | Next major MVP layer. |
-| Inventory movement tracking | **Not implemented** | Stock-in/out and adjustment history remain pending. |
+| Offline POS and sales recording | **Implemented; verification pending** | Cart, quantity controls, payment/change calculation, transaction records, and history are added on `feature/pos-cart-sales`; CI and real-device verification are pending. |
+| Inventory movement tracking | **Needs repository verification** | User reports inventory smoke checks passed, but the current repository still needs a durable stock-movement ledger to independently verify movement history. |
 | Transaction history / receipts | **Not implemented** | Pending POS and transaction milestones. |
 | Web and desktop delivery | **Not started** | Follow Android MVP. |
-| Crypto-related modules | **Deferred** | Must not block traditional grocery MVP. |
+| Stock quantity limit | **Implemented on feature branch** | App validation, repository validation, and SQLite triggers enforce quantities from 0 through 999,999. |\n| Crypto-related modules | **Deferred** | Must not block traditional grocery MVP. |
 
 ## 3. Master checklist
 
