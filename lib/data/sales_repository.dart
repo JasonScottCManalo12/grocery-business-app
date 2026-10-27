@@ -72,14 +72,11 @@ class SaleRepository implements SaleStore {
       });
 
       for (final line in lines) {
-        final changed = await txn.update(
-          'products',
-          {'stock_quantity': _newStockPlaceholder(line), 'updated_at': now},
-          where: 'id = ? AND is_active = 1 AND stock_quantity >= ?',
-          whereArgs: [line.productId, line.quantity],
+        final changed = await txn.rawUpdate(
+          'UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? '
+          'WHERE id = ? AND is_active = 1 AND stock_quantity >= ?',
+          [line.quantity, now, line.productId, line.quantity],
         );
-        // The stock update must subtract the sold quantity atomically. SQLite
-        // expression updates are issued below to avoid stale read/modify/write.
         if (changed == 0) throw StateError('Stock changed during checkout.');
         await txn.insert('sale_items', {
           'sale_id': saleId,
@@ -101,8 +98,6 @@ class SaleRepository implements SaleStore {
     });
   }
 
-  // Placeholder kept private to make stock calculation explicit at call site.
-  int _newStockPlaceholder(SaleLine line) => 0;
 
   @override
   Future<List<SaleReceipt>> getSales() async {
