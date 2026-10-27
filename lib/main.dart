@@ -84,107 +84,109 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
   }
 
   Future<void> _openProductForm({Product? product}) async {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController(text: product?.name ?? '');
-    final priceController = TextEditingController(
-      text: product == null ? '' : product.price.toStringAsFixed(2),
-    );
-    final stockController = TextEditingController(
-      text: product?.stockQuantity.toString() ?? '0',
-    );
-
     final saved = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(product == null ? 'Add product' : 'Edit product'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  key: const Key('product-name'),
-                  controller: nameController,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Product name'),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Enter a product name.'
-                      : null,
-                ),
-                TextFormField(
-                  key: const Key('product-price'),
-                  controller: priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Selling price (PHP)',
-                    prefixText: '₱ ',
+      builder: (dialogContext) {
+        final formKey = GlobalKey<FormState>();
+        var name = product?.name ?? '';
+        var priceText =
+            product == null ? '' : product.price.toStringAsFixed(2);
+        var stockText = product?.stockQuantity.toString() ?? '0';
+
+        return AlertDialog(
+          title: Text(product == null ? 'Add product' : 'Edit product'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    key: const Key('product-name'),
+                    initialValue: name,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(labelText: 'Product name'),
+                    onChanged: (value) => name = value,
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Enter a product name.'
+                        : null,
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  validator: (value) {
-                    final amount = double.tryParse(value?.trim() ?? '');
-                    if (amount == null || !amount.isFinite || amount <= 0) {
-                      return 'Enter a price greater than zero.';
-                    }
-                    if (amount > 999999999) return 'Price is too large.';
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  key: const Key('product-stock'),
-                  controller: stockController,
-                  decoration:
-                      const InputDecoration(labelText: 'Initial stock quantity'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    final quantity = int.tryParse(value?.trim() ?? '');
-                    if (quantity == null || quantity < 0) {
-                      return 'Enter a whole quantity of zero or more.';
-                    }
-                    return null;
-                  },
-                ),
-              ],
+                  TextFormField(
+                    key: const Key('product-price'),
+                    initialValue: priceText,
+                    decoration: const InputDecoration(
+                      labelText: 'Selling price (PHP)',
+                      prefixText: '₱ ',
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (value) => priceText = value,
+                    validator: (value) {
+                      final amount = double.tryParse(value?.trim() ?? '');
+                      if (amount == null || !amount.isFinite || amount <= 0) {
+                        return 'Enter a price greater than zero.';
+                      }
+                      if (amount > 999999999) return 'Price is too large.';
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    key: const Key('product-stock'),
+                    initialValue: stockText,
+                    decoration: const InputDecoration(
+                      labelText: 'Initial stock quantity',
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => stockText = value,
+                    validator: (value) {
+                      final quantity = int.tryParse(value?.trim() ?? '');
+                      if (quantity == null || quantity < 0) {
+                        return 'Enter a whole quantity of zero or more.';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            key: const Key('save-product'),
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-              final price = double.parse(priceController.text.trim());
-              final item = Product(
-                id: product?.id,
-                name: nameController.text.trim(),
-                priceCents: (price * 100).round(),
-                stockQuantity: int.parse(stockController.text.trim()),
-                isActive: product?.isActive ?? true,
-              );
-              try {
-                await widget.store.saveProduct(item);
-                if (dialogContext.mounted) Navigator.pop(dialogContext, true);
-              } catch (_) {
-                if (!dialogContext.mounted) return;
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  const SnackBar(content: Text('Could not save product.')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              key: const Key('save-product'),
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                final amount = double.parse(priceText.trim());
+                final item = Product(
+                  id: product?.id,
+                  name: name.trim(),
+                  priceCents: (amount * 100).round(),
+                  stockQuantity: int.parse(stockText.trim()),
+                  isActive: product?.isActive ?? true,
                 );
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+                try {
+                  await widget.store.saveProduct(item);
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext, true);
+                  }
+                } catch (_) {
+                  if (!dialogContext.mounted) return;
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(content: Text('Could not save product.')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
     );
 
-    nameController.dispose();
-    priceController.dispose();
-    stockController.dispose();
     if (saved == true) {
       await _loadProducts();
       if (!mounted) return;
@@ -332,9 +334,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                               child: Text(product.name.characters.first.toUpperCase()),
                             ),
                             title: Text(product.name),
-                            subtitle: Text(
-                              'Stock: ${product.stockQuantity}',
-                            ),
+                            subtitle: Text('Stock: ${product.stockQuantity}'),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
