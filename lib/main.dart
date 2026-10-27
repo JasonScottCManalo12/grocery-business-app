@@ -1,121 +1,378 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+import 'data/product_repository.dart';
+import 'models/product.dart';
+
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.store});
 
-  // This widget is the root of your application.
+  final ProductStore? store;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Grocery Business App',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: ProductCataloguePage(store: store ?? ProductRepository.instance),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class ProductCataloguePage extends StatefulWidget {
+  const ProductCataloguePage({super.key, required this.store});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+  final ProductStore store;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ProductCataloguePage> createState() => _ProductCataloguePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ProductCataloguePageState extends State<ProductCataloguePage> {
+  final _searchController = TextEditingController();
+  List<Product> _products = [];
+  bool _loading = true;
+  String? _loadError;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_refresh);
+    _loadProducts();
+  }
+
+  @override
+  void dispose() {
+    _searchController
+      ..removeListener(_refresh)
+      ..dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final products = await widget.store.getProducts();
+      if (!mounted) return;
+      setState(() {
+        _products = products;
+        _loading = false;
+        _loadError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = 'Could not load products. Please try again.';
+      });
+    }
+  }
+
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
+
+  List<Product> get _visibleProducts {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) return _products;
+    return _products
+        .where((product) => product.name.toLowerCase().contains(query))
+        .toList(growable: false);
+  }
+
+  Future<void> _openProductForm({Product? product}) async {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController(text: product?.name ?? '');
+    final priceController = TextEditingController(
+      text: product == null ? '' : product.price.toStringAsFixed(2),
+    );
+    final stockController = TextEditingController(
+      text: product?.stockQuantity.toString() ?? '0',
+    );
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(product == null ? 'Add product' : 'Edit product'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  key: const Key('product-name'),
+                  controller: nameController,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(labelText: 'Product name'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Enter a product name.'
+                      : null,
+                ),
+                TextFormField(
+                  key: const Key('product-price'),
+                  controller: priceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Selling price (PHP)',
+                    prefixText: '₱ ',
+                  ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    final amount = double.tryParse(value?.trim() ?? '');
+                    if (amount == null || !amount.isFinite || amount <= 0) {
+                      return 'Enter a price greater than zero.';
+                    }
+                    if (amount > 999999999) return 'Price is too large.';
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  key: const Key('product-stock'),
+                  controller: stockController,
+                  decoration:
+                      const InputDecoration(labelText: 'Initial stock quantity'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    final quantity = int.tryParse(value?.trim() ?? '');
+                    if (quantity == null || quantity < 0) {
+                      return 'Enter a whole quantity of zero or more.';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const Key('save-product'),
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              final price = double.parse(priceController.text.trim());
+              final item = Product(
+                id: product?.id,
+                name: nameController.text.trim(),
+                priceCents: (price * 100).round(),
+                stockQuantity: int.parse(stockController.text.trim()),
+                isActive: product?.isActive ?? true,
+              );
+              try {
+                await widget.store.saveProduct(item);
+                if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+              } catch (_) {
+                if (!dialogContext.mounted) return;
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  const SnackBar(content: Text('Could not save product.')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    nameController.dispose();
+    priceController.dispose();
+    stockController.dispose();
+    if (saved == true) {
+      await _loadProducts();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(product == null ? 'Product added.' : 'Product updated.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deactivate(Product product) async {
+    if (product.id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Deactivate product?'),
+        content: Text(
+          '${product.name} will be hidden from the active catalogue. '
+          'Its record will be retained.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep active'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Deactivate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await widget.store.deactivateProduct(product.id!);
+      await _loadProducts();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Product deactivated.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not deactivate product.')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final products = _visibleProducts;
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+        title: const Text('Grocery Business App'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: TextField(
+              key: const Key('product-search'),
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search products',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear search',
+                        onPressed: _searchController.clear,
+                        icon: const Icon(Icons.clear),
+                      ),
+                border: const OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
+              ),
             ),
-          ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _loadError != null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_loadError!),
+                      const SizedBox(height: 8),
+                      FilledButton(
+                        onPressed: () {
+                          setState(() => _loading = true);
+                          _loadProducts();
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : products.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.inventory_2_outlined, size: 56),
+                            const SizedBox(height: 12),
+                            Text(
+                              _searchController.text.isEmpty
+                                  ? 'No products yet'
+                                  : 'No matching products',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchController.text.isEmpty
+                                  ? 'Add your first product to start building the catalogue.'
+                                  : 'Try a different product name.',
+                              textAlign: TextAlign.center,
+                            ),
+                            if (_searchController.text.isEmpty) ...[
+                              const SizedBox(height: 16),
+                              FilledButton.icon(
+                                onPressed: () => _openProductForm(),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Add product'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadProducts,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+                        itemCount: products.length,
+                        separatorBuilder: (_, __) =>
+                            const Divider(height: 1, indent: 72),
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+                          return ListTile(
+                            leading: CircleAvatar(
+                              child: Text(product.name.characters.first.toUpperCase()),
+                            ),
+                            title: Text(product.name),
+                            subtitle: Text(
+                              'Stock: ${product.stockQuantity}',
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '₱${product.price.toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                PopupMenuButton<String>(
+                                  tooltip: 'Product actions',
+                                  onSelected: (action) {
+                                    if (action == 'edit') {
+                                      _openProductForm(product: product);
+                                    } else if (action == 'deactivate') {
+                                      _deactivate(product);
+                                    }
+                                  },
+                                  itemBuilder: (_) => const [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Text('Edit'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'deactivate',
+                                      child: Text('Deactivate'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('add-product-button'),
+        onPressed: () => _openProductForm(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add product'),
       ),
     );
   }
