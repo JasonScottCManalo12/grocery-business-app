@@ -89,6 +89,66 @@ class _PosPageState extends State<PosPage> {
 
   String _money(int cents) => '₱${(cents / 100).toStringAsFixed(2)}';
 
+  Future<void> _confirmCheckout() async {
+    if (_submitting || _cart.isEmpty) return;
+    final payment = _paymentCents;
+    if (payment < _totalCents) {
+      setState(() => _error = 'Payment must be at least ${_money(_totalCents)}.');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('sale-confirmation-dialog'),
+        title: const Text('Confirm sale?'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Review this transaction before completing checkout.'),
+              const SizedBox(height: 12),
+              ..._products
+                  .where((product) => _cart.containsKey(product.id))
+                  .map((product) {
+                final quantity = _cart[product.id]!;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    '${product.name} × $quantity — '
+                    '${_money(product.priceCents * quantity)}',
+                  ),
+                );
+              }),
+              const Divider(),
+              Text('Total: ${_money(_totalCents)}'),
+              Text('Payment received: ${_money(payment)}'),
+              Text('Change: ${_money(payment - _totalCents)}'),
+              const SizedBox(height: 8),
+              const Text('Confirming will save the sale and deduct stock.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('cancel-sale-confirmation'),
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Go back'),
+          ),
+          FilledButton(
+            key: const Key('confirm-sale'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Confirm sale'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) await _checkout();
+  }
+
   Future<void> _checkout() async {
     if (_submitting || _cart.isEmpty) return;
     final payment = _paymentCents;
@@ -238,7 +298,7 @@ class _PosPageState extends State<PosPage> {
                         key: const Key('complete-sale'),
                         onPressed: _submitting || _cart.isEmpty || _paymentCents < _totalCents
                             ? null
-                            : _checkout,
+                            : _confirmCheckout,
                         icon: _submitting
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.point_of_sale),
