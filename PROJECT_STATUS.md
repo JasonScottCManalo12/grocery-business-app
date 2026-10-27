@@ -2,110 +2,61 @@
 
 **Last reviewed:** 2026-10-27  
 **Repository:** `JasonScottCManalo12/grocery-business-app`  
+**Working branch:** `feature/pos-cart-sales`  
 **Default branch:** `main`
 
-> This file is the project's current status and working checklist. Update it when a milestone is supported by repository code, tests, or other verifiable evidence. A successful build confirms packaging—not that grocery features are implemented.
+> This dashboard distinguishes repository/CI evidence from physical-device checks reported by the user. A successful build confirms packaging, not every business behavior.
 
-## 1. Project direction
+## 1. Product direction
 
-The Grocery Business App is **one shared business ecosystem** with specialized interfaces for Customer, Owner / Boss, POS / Staff, Financial Reports / Accounting, Compliance, Inventory & Purchasing, and Payments & Settlement. These interfaces should use consistent shared records for products, transactions, customer IDs, inventory, permissions, and audit trails. The separate MLM App is outside this repository and project scope.
+The Grocery Business App is one shared business ecosystem with specialized interfaces for Customer, Owner/Boss, POS/Staff, Financial Reports/Accounting, Compliance, Inventory & Purchasing, and Payments & Settlement. These interfaces should share consistent product, transaction, customer, inventory, permission, and audit records. The independent MLM App is outside this repository.
 
-### Delivery priorities
-1. Android APK
-2. Web
-3. Desktop
+Delivery order: **Android APK → web → desktop**. Phase 1 is traditional grocery operations using Flutter/Dart, local SQLite, offline-first, one device/shop. Crypto modules must not delay the ordinary MVP.
 
-### MVP approach
-- Phase 1: simple, traditional grocery operations first.
-- Flutter / Dart, Android-first.
-- Local SQLite and offline-first operation for one device / one shop.
-- Advanced crypto modules must not delay the ordinary grocery MVP.
+## 2. Current status
 
-## 2. Current verified status
-
-| Area | Status | Evidence / notes |
+| Area | Status | Evidence |
 |---|---|---|
-| GitHub repository | **Available** | Repository exists; default branch is `main`. |
-| Android CI workflow | **Implemented and operational** | Workflow successfully runs tests and Android release builds. |
-| Workflow #8 | **Passed** | Run `40450412116` completed successfully after the product-catalogue implementation fix. |
-| APK artifact | **Available from workflow #8** | Split APK artifact uploaded successfully for `armeabi-v7a`, `arm64-v8a`, and `x86_64`. |
-| Product catalogue | **Implemented and CI-verified** | Create, view, edit, search, and deactivate product flows are implemented on `feature/product-catalogue-sqlite`; widget tests pass. |
-| SQLite persistence | **Implemented and real-device verified** | Product persistence smoke test has been completed successfully on the target Android device, including create → restart → edit → deactivate. |
-| Offline POS and sales recording | **Implemented; verification pending** | Cart, quantity controls, payment/change calculation, transaction records, and history are added on `feature/pos-cart-sales`; CI and real-device verification are pending. |
-| Inventory movement tracking | **Needs repository verification** | User reports inventory smoke checks passed, but the current repository still needs a durable stock-movement ledger to independently verify movement history. |
-| Transaction history / receipts | **Not implemented** | Pending POS and transaction milestones. |
-| Web and desktop delivery | **Not started** | Follow Android MVP. |
-| Stock quantity limit | **Implemented on feature branch** | App validation, repository validation, and SQLite triggers enforce quantities from 0 through 999,999. |\n| Crypto-related modules | **Deferred** | Must not block traditional grocery MVP. |
+| Android CI | Operational | Workflow runs Flutter tests, builds split release APKs, and uploads artifacts. |
+| Product catalogue | Implemented | Create, view, edit, search, deactivate; user reports all 6 catalogue smoke tests passed. |
+| Product SQLite persistence | User-reported device verification complete | Create/edit/deactivate and restart persistence passed. |
+| POS cart and checkout | Implemented on feature branch | Cart, quantities, total/payment/change, checkout confirmation, sale history. User reports all 7 previous POS checks and 4 confirmation-build checks passed on device. |
+| Stock quantity cap | Implemented on feature branch | UI/repository validation and SQLite constraints/triggers target 0–999,999; user reports the over-cap device test passed. |
+| Stock movement ledger | Data layer implemented on feature branch | SQLite `stock_movements` table, stock-in/out and adjustment methods, plus sale deduction entries; integration tests added. Inventory movement screen/UI still needs source-level confirmation and wiring if absent. |
+| Sale atomicity | Implemented and integration-tested in code; CI pending final result | Sale header, line items, stock deduction, and sale movement ledger are written inside one SQLite transaction. Failure tests cover insufficient stock/payment rollback. |
+| Web / desktop | Not started | After Android MVP. |
+| Crypto modules | Deferred | Must not delay traditional grocery operations. |
 
-## 3. Master checklist
+### Latest workflow evidence
 
-Status meanings: **Not started** = no verified implementation; **In progress** = implementation underway; **Blocked** = cannot proceed pending a dependency; **Completed** = implemented and verified with evidence.
+- Confirmation-flow baseline passed: [run 40469645532](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532).
+- New stock-ledger and SQLite integration-test code is on `feature/pos-cart-sales`. Latest run for commit `dd82eae8`: [run 40474176723](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723). Tests passed; split APK build was still running at last check.
 
-### Milestone 0 — Project foundation
-- [x] GitHub repository exists.
-- [x] Android APK build workflow is configured.
-- [x] Workflow supports pushes to the main branches, pull requests, and manual runs.
-- [x] Fresh APK artifact verified in workflow #8.
-- [x] Current feature branch Flutter tests pass in workflow #8.
-- [x] Current feature branch release split APK build passes in workflow #8.
-- [x] Real-device APK smoke test completed.
+## 3. Smoke-test status (user-reported)
 
-### Milestone 1 — Traditional grocery MVP (Android-first)
-- [ ] Define and implement the grocery home/navigation screen.
-- [x] Product catalogue: create, view, edit, search, and deactivate products.
-- [ ] Product categories, units, cost price, SKU/barcode fields.
-- [x] Inventory quantity and stock adjustments (user-reported stock-in, stock-out, adjustment, overdraw, and restart checks complete).
-- [x] Local SQLite product persistence implementation.
-- [x] Verify SQLite persistence across a real app restart on Android.
-- [x] POS cart: add/remove items and change quantities (user-reported device smoke test; code on feature branch).
-- [x] Calculate subtotal, totals, payment received, and change (user-reported device smoke test; code on feature branch).
-- [x] Complete a sale and save a transaction record (user-reported device smoke test; code on feature branch).
-- [x] Basic transaction history UI and persisted sale records (user-reported restart smoke test; recheck on confirmation build).
-- [x] Confirm sale details before committing the transaction (CI passed; user reports confirmation, cancellation, and restart checks passed on Android).
-- [ ] Basic low-stock visibility.
-- [x] Validate the updated confirmation flow and complete core flow with the fresh CI APK on a real device (user-reported smoke tests complete).
+- [x] Product catalogue: 6/6.
+- [x] Inventory: 6/6, including rejection above 999,999.
+- [x] POS and sales, previous build: 7/7.
+- [x] POS confirmation, latest build: 4/4.
+- [ ] Re-test inventory ledger behavior on an APK built from the current source changes.
+- [ ] Re-test POS and sale history on the APK built from the current source changes.
 
-### Milestone 2 — Operational safeguards
-- [x] Basic product input validation for name, price, and stock quantity.
-- [ ] Reliable transaction IDs and timestamps.
-- [ ] Backup / restore strategy appropriate for a single offline device.
-- [ ] Record stock changes and sales consistently.
-- [ ] Review broader error handling and data integrity.
+## 4. Current recommendations
 
-### Milestone 3 — Shared ecosystem expansion
-- [ ] Customer accounts and buyer categories, when scheduled for implementation.
-- [ ] Owner / boss interface and permissions.
-- [ ] Staff roles and access controls.
-- [ ] Financial reports / accounting.
-- [ ] Purchasing and supplier workflows.
-- [ ] Payment and settlement workflows.
-- [ ] Compliance records and audit trails.
+1. Confirm the latest workflow finishes successfully and produces APK artifacts.
+2. Inspect and test the inventory UI wiring: the data layer now records stock-in, stock-out, adjustments, and sale deductions, but the repository tree does not currently contain a dedicated inventory screen file.
+3. After installing the newest artifact, verify movement history and sale history survive restart.
+4. Keep `feature/pos-cart-sales` isolated until CI and device checks pass. Do not merge into `main` automatically.
+5. Once verified, update this dashboard with final run/artifact links and the new device results.
 
-### Milestone 4 — Later delivery targets
-- [ ] Web version after the Android MVP.
-- [ ] Desktop version after web.
-- [ ] Evaluate and schedule crypto checkout, sponsorship/funding, buyer accounts, and Simple Earn modules only after the ordinary MVP is stable.
+## 5. Key links
 
-## 4. Next recommended actions
-
-1. Review repository implementation and add/confirm SQLite integration tests for stock movements, sale commit, stock deduction, insufficient stock, and rollback atomicity.
-2. Reconcile this status dashboard with implementation details and evidence links after that review.
-3. Keep `feature/pos-cart-sales` isolated until the code and integration-test coverage are reviewed; physical-device smoke tests are user-reported complete.
-
-## 5. Evidence and working links
 - [Repository](https://github.com/JasonScottCManalo12/grocery-business-app)
-- [Android build workflow](.github/workflows/build-android.yml)
-- [Workflow #8](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40450412116)
-- [GitHub Actions runs and artifacts](https://github.com/JasonScottCManalo12/grocery-business-app/actions)
-- [Source code](https://github.com/JasonScottCManalo12/grocery-business-app/tree/feature/product-catalogue-sqlite/lib)
+- [GitHub Actions](https://github.com/JasonScottCManalo12/grocery-business-app/actions)
+- [Confirmation-flow workflow](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532)
+- [Current stock-ledger/integration-test workflow](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723)
+- [POS feature branch](https://github.com/JasonScottCManalo12/grocery-business-app/tree/feature/pos-cart-sales)
 
 ## 6. Update protocol
 
-For each meaningful milestone:
-1. Discuss and agree on the scope before making changes.
-2. Implement the agreed change.
-3. Run the relevant tests/build and inspect the actual result.
-4. Update this file with the status, verification date, and evidence link.
-5. Record important architecture decisions in repository documentation when appropriate.
-
-Keep this file concise enough to serve as the current dashboard. Use commit history, pull requests, workflow runs, and code for detailed evidence. Do not mark a feature complete merely because a plan exists or an APK builds.
+For each milestone: implement the agreed scope, run tests/build, inspect actual results, update this dashboard with evidence, and keep unverified behavior marked as pending. Do not merge a feature branch without explicit approval.
