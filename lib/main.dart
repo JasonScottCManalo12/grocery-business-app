@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'data/product_repository.dart';
+import 'data/sales_repository.dart';
 import 'models/product.dart';
+import 'pos/pos_page.dart';
 
 void main() => runApp(const MyApp());
 
@@ -141,8 +143,8 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                     onChanged: (value) => stockText = value,
                     validator: (value) {
                       final quantity = int.tryParse(value?.trim() ?? '');
-                      if (quantity == null || quantity < 0) {
-                        return 'Enter a whole quantity of zero or more.';
+                      if (quantity == null || quantity < 0 || quantity > 999999) {
+                        return 'Enter a whole quantity from 0 to 999999.';
                       }
                       return null;
                     },
@@ -242,6 +244,21 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Grocery Business App'),
+        actions: [
+          IconButton(
+            key: const Key('open-pos'),
+            tooltip: 'Open POS checkout',
+            icon: const Icon(Icons.point_of_sale),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => PosPage(
+                  products: widget.store,
+                  sales: SaleRepository(),
+                ),
+              ),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),
           child: Padding(
