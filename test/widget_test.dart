@@ -87,7 +87,7 @@ void main() {
 
     expect(find.text('Enter a product name.'), findsOneWidget);
     expect(find.text('Enter a price greater than zero.'), findsOneWidget);
-    expect(find.text('Enter a whole quantity of zero or more.'), findsOneWidget);
+    expect(find.text('Enter a whole quantity from 0 to 999999.'), findsOneWidget);
     expect(find.byKey(const Key('save-product')), findsOneWidget);
   });
 
