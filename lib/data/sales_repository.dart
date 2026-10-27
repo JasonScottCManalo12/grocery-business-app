@@ -86,6 +86,16 @@ class SaleRepository implements SaleStore {
           'unit_price_cents': line.unitPriceCents,
           'line_total_cents': line.lineTotalCents,
         });
+        await txn.insert('stock_movements', {
+          'product_id': line.productId,
+          'product_name': line.productName,
+          'movement_type': 'sale',
+          'quantity_delta': -line.quantity,
+          'quantity_after': product.stockQuantity - line.quantity,
+          'reason': 'Sale #$saleId',
+          'created_at': now,
+          'sale_id': saleId,
+        });
       }
 
       return SaleReceipt(
