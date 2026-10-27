@@ -72,7 +72,7 @@ void main() {
     expect(store.products.single.priceCents, 5550);
   });
 
-  testWidgets('rejects an empty name and zero selling price', (tester) async {
+  testWidgets('rejects invalid product fields', (tester) async {
     await tester.pumpWidget(MyApp(store: MemoryProductStore()));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('add-product-button')));
@@ -87,7 +87,7 @@ void main() {
     expect(find.text('Enter a product name.'), findsOneWidget);
     expect(find.text('Enter a price greater than zero.'), findsOneWidget);
     expect(find.text('Enter a whole quantity of zero or more.'), findsOneWidget);
-    expect(find.text('Add product'), findsOneWidget);
+    expect(find.byKey(const Key('save-product')), findsOneWidget);
   });
 
   testWidgets('search filters the active product list', (tester) async {
