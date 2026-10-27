@@ -20,27 +20,6 @@ class _Products implements ProductStore {
 
   @override
   Future<void> deactivateProduct(int id) async {}
-  testWidgets('canceling sale confirmation does not submit the sale', (tester) async {
-    final products = _Products();
-    final sales = _Sales();
-    await tester.pumpWidget(MaterialApp(
-      home: PosPage(products: products, sales: sales),
-    ));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('add-cart-1')));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('payment-received')), '5.00');
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('complete-sale')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('cancel-sale-confirmation')));
-    await tester.pumpAndSettle();
-
-    expect(sales.completedCount, 0);
-    expect(find.text('Cart is empty'), findsNothing);
-  });
-
 }
 
 class _Sales implements SaleStore {
@@ -109,12 +88,39 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('complete-sale')));
     await tester.pumpAndSettle();
+
     expect(find.byKey(const Key('sale-confirmation-dialog')), findsOneWidget);
+    expect(find.text('Total: ₱5.00'), findsOneWidget);
+    expect(find.text('Payment received: ₱5.00'), findsOneWidget);
+
     await tester.tap(find.byKey(const Key('confirm-sale')));
     await tester.pumpAndSettle();
 
     expect(sales.completedCount, 1);
     expect(find.text('Sale #1 · ₱5.00'), findsOneWidget);
     expect(find.text('Cart is empty'), findsOneWidget);
+  });
+
+  testWidgets('canceling sale confirmation does not submit the sale', (tester) async {
+    final products = _Products();
+    final sales = _Sales();
+    await tester.pumpWidget(MaterialApp(
+      home: PosPage(products: products, sales: sales),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('add-cart-1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('payment-received')), '5.00');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('complete-sale')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('cancel-sale-confirmation')));
+    await tester.pumpAndSettle();
+
+    expect(sales.completedCount, 0);
+    expect(find.text('Cart is empty'), findsNothing);
+    expect(find.byKey(const Key('sale-confirmation-dialog')), findsNothing);
   });
 }
