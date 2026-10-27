@@ -13,6 +13,9 @@ abstract interface class ProductStore {
 class ProductRepository implements ProductStore {
   ProductRepository._();
 
+  /// Creates a repository around an existing database, useful for isolated tests.
+  ProductRepository.forDatabase(Database database) : _database = database;
+
   static final ProductRepository instance = ProductRepository._();
   Database? _database;
 
