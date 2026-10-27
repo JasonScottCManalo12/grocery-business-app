@@ -24,9 +24,11 @@ class ProductRepository implements ProductStore {
       onCreate: (db, version) async {
         await _createProducts(db);
         await _createSales(db);
+        await _createStockCapTriggers(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createSales(db);
+        await _createStockCapTriggers(db);
       },
     );
     return _database!;
@@ -68,6 +70,25 @@ class ProductRepository implements ProductStore {
       )
     ''');
     await db.execute('CREATE INDEX sale_items_sale_id_index ON sale_items(sale_id)');
+  }
+
+  Future<void> _createStockCapTriggers(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TRIGGER IF NOT EXISTS products_stock_cap_insert
+      BEFORE INSERT ON products
+      WHEN NEW.stock_quantity < 0 OR NEW.stock_quantity > 999999
+      BEGIN
+        SELECT RAISE(ABORT, 'Stock quantity must be between 0 and 999999.');
+      END
+    ''');
+    await db.execute('''
+      CREATE TRIGGER IF NOT EXISTS products_stock_cap_update
+      BEFORE UPDATE OF stock_quantity ON products
+      WHEN NEW.stock_quantity < 0 OR NEW.stock_quantity > 999999
+      BEGIN
+        SELECT RAISE(ABORT, 'Stock quantity must be between 0 and 999999.');
+      END
+    ''');
   }
 
   @override
