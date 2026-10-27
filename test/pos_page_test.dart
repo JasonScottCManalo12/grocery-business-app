@@ -90,7 +90,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(sales.completedCount, 1);
-    expect(find.textContaining('Sale #1'), findsOneWidget);
+    expect(find.text('Sale #1 · ₱5.00'), findsOneWidget);
     expect(find.text('Cart is empty'), findsOneWidget);
   });
 }
