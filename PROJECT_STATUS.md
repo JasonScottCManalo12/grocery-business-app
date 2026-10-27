@@ -54,16 +54,16 @@ Status meanings: **Not started** = no verified implementation; **In progress** =
 - [ ] Define and implement the grocery home/navigation screen.
 - [x] Product catalogue: create, view, edit, search, and deactivate products.
 - [ ] Product categories, units, cost price, SKU/barcode fields.
-- [ ] Inventory quantity and stock adjustments.
+- [x] Inventory quantity and stock adjustments (user-reported stock-in, stock-out, adjustment, overdraw, and restart checks complete).
 - [x] Local SQLite product persistence implementation.
 - [x] Verify SQLite persistence across a real app restart on Android.
 - [x] POS cart: add/remove items and change quantities (user-reported device smoke test; code on feature branch).
 - [x] Calculate subtotal, totals, payment received, and change (user-reported device smoke test; code on feature branch).
 - [x] Complete a sale and save a transaction record (user-reported device smoke test; code on feature branch).
 - [x] Basic transaction history UI and persisted sale records (user-reported restart smoke test; recheck on confirmation build).
-- [x] Confirm sale details before committing the transaction (new implementation; CI pending).
+- [x] Confirm sale details before committing the transaction (CI passed; user reports confirmation, cancellation, and restart checks passed on Android).
 - [ ] Basic low-stock visibility.
-- [ ] Validate the updated confirmation flow and complete core flow with the fresh CI APK on a real device.
+- [x] Validate the updated confirmation flow and complete core flow with the fresh CI APK on a real device (user-reported smoke tests complete).
 
 ### Milestone 2 — Operational safeguards
 - [x] Basic product input validation for name, price, and stock quantity.
@@ -88,11 +88,9 @@ Status meanings: **Not started** = no verified implementation; **In progress** =
 
 ## 4. Next recommended actions
 
-1. Confirm the new pre-sale confirmation dialog and cancellation behavior pass CI; install the resulting APK and re-run POS smoke tests.
-2. Complete the remaining physical stock-cap test: reject quantities above 999999.
-3. Verify that a durable stock-movement ledger exists in the repository and add integration tests for stock-in, stock-out, adjustments, and history persistence if needed.
-4. Add/confirm SQLite integration tests proving sale commit, stock deduction, insufficient-stock rejection, and rollback are atomic.
-5. Keep `feature/pos-cart-sales` isolated until the updated APK is tested and stable.
+1. Review repository implementation and add/confirm SQLite integration tests for stock movements, sale commit, stock deduction, insufficient stock, and rollback atomicity.
+2. Reconcile this status dashboard with implementation details and evidence links after that review.
+3. Keep `feature/pos-cart-sales` isolated until the code and integration-test coverage are reviewed; physical-device smoke tests are user-reported complete.
 
 ## 5. Evidence and working links
 - [Repository](https://github.com/JasonScottCManalo12/grocery-business-app)
