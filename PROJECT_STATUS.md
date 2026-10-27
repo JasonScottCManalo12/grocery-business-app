@@ -30,7 +30,7 @@ The Grocery Business App is **one shared business ecosystem** with specialized i
 | Workflow #8 | **Passed** | Run `40450412116` completed successfully after the product-catalogue implementation fix. |
 | APK artifact | **Available from workflow #8** | Split APK artifact uploaded successfully for `armeabi-v7a`, `arm64-v8a`, and `x86_64`. |
 | Product catalogue | **Implemented and CI-verified** | Create, view, edit, search, and deactivate product flows are implemented on `feature/product-catalogue-sqlite`; widget tests pass. |
-| SQLite persistence | **Implemented; real-device persistence not yet verified** | Product repository uses local SQLite. App-restart persistence still requires physical-device verification. |
+| SQLite persistence | **Implemented and real-device verified** | Product persistence smoke test has been completed successfully on the target Android device, including create → restart → edit → deactivate. |
 | Offline POS and sales recording | **Not implemented** | Next major MVP layer. |
 | Inventory movement tracking | **Not implemented** | Stock-in/out and adjustment history remain pending. |
 | Transaction history / receipts | **Not implemented** | Pending POS and transaction milestones. |
@@ -48,7 +48,7 @@ Status meanings: **Not started** = no verified implementation; **In progress** =
 - [x] Fresh APK artifact verified in workflow #8.
 - [x] Current feature branch Flutter tests pass in workflow #8.
 - [x] Current feature branch release split APK build passes in workflow #8.
-- [ ] Real-device APK smoke test completed.
+- [x] Real-device APK smoke test completed.
 
 ### Milestone 1 — Traditional grocery MVP (Android-first)
 - [ ] Define and implement the grocery home/navigation screen.
@@ -56,7 +56,7 @@ Status meanings: **Not started** = no verified implementation; **In progress** =
 - [ ] Product categories, units, cost price, SKU/barcode fields.
 - [ ] Inventory quantity and stock adjustments.
 - [x] Local SQLite product persistence implementation.
-- [ ] Verify SQLite persistence across a real app restart on Android.
+- [x] Verify SQLite persistence across a real app restart on Android.
 - [ ] POS cart: add/remove items and change quantities.
 - [ ] Calculate subtotal, totals, payment received, and change.
 - [ ] Complete a sale and save a transaction record.
@@ -87,11 +87,11 @@ Status meanings: **Not started** = no verified implementation; **In progress** =
 
 ## 4. Next recommended actions
 
-1. Install the workflow #8 APK on the target Android device and perform a real-device smoke test.
-2. Verify product persistence across app restart: create → close/reopen → edit → deactivate.
-3. If the smoke test passes, implement inventory movement tracking and stock adjustments.
+1. Implement inventory movement tracking and stock adjustments.
+2. Add automated tests for stock-in, stock-out, and adjustment behavior.
+3. Build and verify a new Android artifact through GitHub Actions.
 4. Then implement the POS cart and sale transaction flow.
-5. Keep the feature branch unmerged until the real-device verification is complete and the MVP foundation is stable.
+5. Keep the feature branch isolated until the next milestone is tested and stable.
 
 ## 5. Evidence and working links
 - [Repository](https://github.com/JasonScottCManalo12/grocery-business-app)
