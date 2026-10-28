@@ -17,6 +17,17 @@ void main() {
     expect(formatMoneyCents(-123456), '-₱1,234.56');
   });
 
+  test('formats in-progress decimal input with grouping beyond four digits', () {
+    expect(formatEditableGroupedDecimal('1234'), '1,234');
+    expect(formatEditableGroupedDecimal('12345'), '12,345');
+    expect(formatEditableGroupedDecimal('1234567'), '1,234,567');
+    expect(formatEditableGroupedDecimal('123456789'), '123,456,789');
+    expect(formatEditableGroupedDecimal('123456789.00'), '123,456,789.00');
+    expect(formatEditableGroupedDecimal('1234.'), '1,234.');
+    expect(formatEditableGroupedDecimal(''), '');
+    expect(formatEditableGroupedDecimal('12.3.4'), isNull);
+  });
+
   test('parses comma-grouped whole quantities and rejects malformed grouping', () {
     expect(parseCommaSeparatedInt('1,234'), 1234);
     expect(parseCommaSeparatedInt('1234'), 1234);
