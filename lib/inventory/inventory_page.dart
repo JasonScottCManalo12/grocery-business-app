@@ -106,9 +106,35 @@ class _InventoryPageState extends State<InventoryPage> {
       );
       return;
     }
+    Product? product;
+    for (final item in _products) {
+      if (item.id == id) {
+        product = item;
+        break;
+      }
+    }
+    if (product == null) return;
+
+    final currentStock = product.stockQuantity;
+    final maxQuantity = stockIn ? 999999 - currentStock : currentStock;
+    if (maxQuantity < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            stockIn
+                ? 'Stock is already at the maximum of 999,999.'
+                : 'There is no available stock to remove.',
+          ),
+        ),
+      );
+      return;
+    }
+
     final quantityController = TextEditingController();
     final reasonController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    final minLabel = '1';
+    final maxLabel = formatIntWithCommas(maxQuantity);
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -118,17 +144,25 @@ class _InventoryPageState extends State<InventoryPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Text(
+                stockIn
+                    ? 'Available capacity: $maxLabel units (maximum stock: 999,999).'
+                    : 'Available stock: $maxLabel units.',
+              ),
               TextFormField(
                 key: const Key('inventory-movement-quantity'),
                 controller: quantityController,
                 autofocus: true,
                 keyboardType: TextInputType.number,
                 inputFormatters: [_GroupedIntegerInputFormatter()],
-                decoration: const InputDecoration(labelText: 'Quantity'),
+                decoration: InputDecoration(
+                  labelText: 'Quantity',
+                  helperText: 'Minimum: $minLabel · Maximum: $maxLabel',
+                ),
                 validator: (value) {
                   final quantity = parseCommaSeparatedInt(value ?? '');
-                  if (quantity == null || quantity < 1 || quantity > 999999) {
-                    return 'Enter a whole quantity from 1 to 999999.';
+                  if (quantity == null || quantity < 1 || quantity > maxQuantity) {
+                    return 'Enter a whole quantity from 1 to $maxLabel.';
                   }
                   return null;
                 },
