@@ -55,7 +55,7 @@ class _Sales implements SaleStore {
 
 Future<void> _scrollToPayment(WidgetTester tester) async {
   final payment = find.byKey(const Key('payment-received'));
-  final mainScroll = find.ancestor(
+  final mainScroll = find.descendant(
     of: find.byKey(const Key('pos-main-scroll')),
     matching: find.byType(Scrollable),
   ).first;
