@@ -29,17 +29,21 @@ class _InventoryPageState extends State<InventoryPage> {
   Future<void> _load() async {
     try {
       final products = await widget.repository.getProducts();
+      var selectedId = _selectedProductId;
+      if (selectedId == null && products.isNotEmpty) {
+        selectedId = products.first.id;
+      }
+      if (selectedId != null && !products.any((product) => product.id == selectedId)) {
+        selectedId = products.isEmpty ? null : products.first.id;
+      }
       final movements = await widget.repository.getStockMovements(
-        productId: _selectedProductId,
+        productId: selectedId,
       );
       if (!mounted) return;
       setState(() {
         _products = products;
         _movements = movements;
-        if (_selectedProductId != null &&
-            !products.any((product) => product.id == _selectedProductId)) {
-          _selectedProductId = null;
-        }
+        _selectedProductId = selectedId;
         _loading = false;
         _error = null;
       });
@@ -149,7 +153,10 @@ class _InventoryPageState extends State<InventoryPage> {
       );
       return;
     }
-    final product = _products.where((item) => item.id == id).firstOrNull;
+    Product? product;
+    for (final item in _products) {
+      if (item.id == id) { product = item; break; }
+    }
     if (product == null) return;
     final quantityController = TextEditingController(text: product.stockQuantity.toString());
     final reasonController = TextEditingController();
@@ -248,7 +255,10 @@ class _InventoryPageState extends State<InventoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedProduct = _products.where((item) => item.id == _selectedProductId).firstOrNull;
+    Product? selectedProduct;
+    for (final item in _products) {
+      if (item.id == _selectedProductId) { selectedProduct = item; break; }
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Inventory & Movement History')),
       body: _loading
