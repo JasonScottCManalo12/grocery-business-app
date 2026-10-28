@@ -32,7 +32,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - Confirmation-flow baseline passed: [run 40469645532](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532).
 - Stock-ledger and SQLite integration-test baseline: [run 40474176723](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723).
 - Dashboard build baseline: [run 40474375181](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474375181).
-- Product description persistence, duplicate-name guard, POS search/list, inventory UI, and integration-test updates have been committed to `feature/pos-cart-sales`; a new CI run and device retest are required before these changes are considered verified.
+- Product description persistence, duplicate-name guard, POS search/list, inventory UI, and integration-test updates are committed to `feature/pos-cart-sales`. Workflow run 48 fixed the inventory compile error but failed three POS widget tests because the payment field was not yet built by the lazy outer ListView; tests now scroll until it is visible. Retry and device verification remain pending.
 
 ## 3. Smoke-test status (user-reported)
 
