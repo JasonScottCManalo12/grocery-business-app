@@ -236,8 +236,12 @@ class ProductRepository implements ProductStore {
     final duplicateRows = await db.query(
       'products',
       columns: ['id'],
-      where: 'lower(trim(name)) = ? AND (? IS NULL OR id != ?)',
-      whereArgs: [normalizedName, product.id, product.id],
+      where: product.id == null
+          ? 'lower(trim(name)) = ?'
+          : 'lower(trim(name)) = ? AND id != ?',
+      whereArgs: product.id == null
+          ? [normalizedName]
+          : [normalizedName, product.id],
       limit: 1,
     );
     if (duplicateRows.isNotEmpty) {
