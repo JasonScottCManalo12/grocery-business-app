@@ -5,6 +5,7 @@ import 'data/sales_repository.dart';
 import 'models/product.dart';
 import 'pos/pos_page.dart';
 import 'inventory/inventory_page.dart';
+import 'utils/number_format.dart';
 
 void main() => runApp(const MyApp());
 
@@ -94,8 +95,8 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
         var name = product?.name ?? '';
         var description = product?.description ?? '';
         var priceText =
-            product == null ? '' : product.price.toStringAsFixed(2);
-        var stockText = product?.stockQuantity.toString() ?? '0';
+            product == null ? '' : formatMoneyCents(product.priceCents).replaceFirst('₱', '');
+        var stockText = product == null ? '0' : formatIntWithCommas(product.stockQuantity);
 
         return AlertDialog(
           title: Text(product == null ? 'Add product' : 'Edit product'),
@@ -139,7 +140,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                         const TextInputType.numberWithOptions(decimal: true),
                     onChanged: (value) => priceText = value,
                     validator: (value) {
-                      final amount = double.tryParse(value?.trim() ?? '');
+                      final amount = parseCommaSeparatedDouble(value ?? '');
                       if (amount == null || !amount.isFinite || amount <= 0) {
                         return 'Enter a price greater than zero.';
                       }
@@ -156,7 +157,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                     keyboardType: TextInputType.number,
                     onChanged: (value) => stockText = value,
                     validator: (value) {
-                      final quantity = int.tryParse(value?.trim() ?? '');
+                      final quantity = parseCommaSeparatedInt(value ?? '');
                       if (quantity == null || quantity < 0 || quantity > 999999) {
                         return 'Enter a whole quantity from 0 to 999999.';
                       }
@@ -176,13 +177,13 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
               key: const Key('save-product'),
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
-                final amount = double.parse(priceText.trim());
+                final amount = parseCommaSeparatedDouble(priceText)!;
                 final item = Product(
                   id: product?.id,
                   name: name.trim(),
                   description: description.trim(),
                   priceCents: (amount * 100).round(),
-                  stockQuantity: int.parse(stockText.trim()),
+                  stockQuantity: parseCommaSeparatedInt(stockText)!,
                   isActive: product?.isActive ?? true,
                 );
                 try {
@@ -383,13 +384,13 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                             title: Text(product.name),
                             subtitle: Text([
                               if (product.description.trim().isNotEmpty) product.description.trim(),
-                              'Stock: ${product.stockQuantity}',
+                              'Stock: ${formatIntWithCommas(product.stockQuantity)}',
                             ].join(' · ')),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '₱${product.price.toStringAsFixed(2)}',
+                                  formatMoneyCents(product.priceCents),
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 PopupMenuButton<String>(
