@@ -36,7 +36,7 @@
 - [x] Format inventory counts and movement deltas/balances with thousands separators.
 - [x] Reload inventory data after stock-in/out/adjustment operations.
 - [x] Refresh the product catalogue after returning from Inventory, so the new stock balance is displayed automatically.
-- [ ] Re-test comma-formatted stock-in/out/adjustment quantities and formatted history on the newest APK; automatic catalogue/POS refresh is covered by prior green CI runs #69–71.
+- [x] User-reported device verification on the current inventory build: comma-formatted stock-in quantity (e.g. `1,234`), stock-out with available-stock cap, adjustment range `0–999,999`, formatted movement history, and persistence after navigating away and returning all passed. This is user-reported device evidence, separate from CI.
 - [x] Enforce stock-movement quantity limits (stock-in capped by the remaining capacity to 999,999; stock-out capped by current stock; adjustments restricted to 0–999,999); latest workflow #84 passed. User-reported over-cap device verification is recorded in `PROJECT_STATUS.md`.
 
 ## Release and project management
@@ -46,7 +46,7 @@
 - [x] User reports the six latest APK smoke checks passed before the comma-formatting changes.
 - [x] Confirm CI passes after the latest payment-formatting changes: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997).
 - [x] Confirm CI passes after stock-movement quantity-limit changes: [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), commit `1c92a66c8d043252f02d6f781a37d25926b3279d`.
-- [x] User confirmed the latest APK/device checklist is all checked; do not merge without explicit approval.
+- [x] User confirmed all five inventory device-verification checks passed: grouped stock-in quantity, stock-out and available-stock cap, valid adjustment range, formatted movement history, and persistence after navigation. Do not merge without explicit approval.
 - [x] Keep web, desktop, and crypto modules from delaying the traditional Android MVP.
 
 ## Latest workflow evidence
@@ -54,4 +54,4 @@
 - Latest workflow passed: [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), commit `1c92a66c8d043252f02d6f781a37d25926b3279d` (`Enforce stock movement quantity limits`).
 - Earlier payment-formatting/checkout regression workflow passed: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`.
 - Run #78 artifact `grocery-business-app-apks` was approximately 24.5 MB and had an availability window ending 2026-11-11 04:54 UTC; check run #84 for its own current artifact status.
-- User confirmed the latest device checks for the previous APK were all checked. Keep the comma-formatted stock-in/out/adjustment and formatted movement-history test unchecked until verified on the newest APK.
+- User reports all five inventory device checks passed: comma-grouped stock-in, stock-out respecting available stock, adjustment range `0–999,999`, formatted movement history, and persistence after navigation. Record these as user-reported device verification; do not imply CI independently proves device behavior.
