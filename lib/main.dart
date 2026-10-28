@@ -189,11 +189,11 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                   if (dialogContext.mounted) {
                     Navigator.pop(dialogContext, true);
                   }
-                } catch (_) {
+                } catch (error) {
                   if (!dialogContext.mounted) return;
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     SnackBar(content: Text(
-                      _.toString().replaceFirst('Bad state: ', '').replaceFirst('Invalid argument(s): ', ''),
+                      error.toString().replaceFirst('Bad state: ', '').replaceFirst('Invalid argument(s): ', ''),
                     )),
                   );
                 }
