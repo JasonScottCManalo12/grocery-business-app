@@ -4,6 +4,7 @@ import '../data/product_repository.dart';
 import '../data/sales_repository.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
+import '../utils/number_format.dart';
 
 class PosPage extends StatefulWidget {
   const PosPage({super.key, required this.products, required this.sales});
@@ -31,7 +32,7 @@ class _PosPageState extends State<PosPage> {
       });
 
   int get _paymentCents {
-    final amount = double.tryParse(_paymentController.text.trim());
+    final amount = parseCommaSeparatedDouble(_paymentController.text);
     if (amount == null || !amount.isFinite || amount < 0) return -1;
     return (amount * 100).round();
   }
@@ -87,12 +88,12 @@ class _PosPageState extends State<PosPage> {
       } else if (next <= product.stockQuantity) {
         _cart[product.id!] = next;
       } else {
-        _error = 'Only ${product.stockQuantity} units of ${product.name} are available.';
+        _error = 'Only ${formatIntWithCommas(product.stockQuantity)} units of ${product.name} are available.';
       }
     });
   }
 
-  String _money(int cents) => '₱${(cents / 100).toStringAsFixed(2)}';
+  String _money(int cents) => formatMoneyCents(cents);
 
   Future<void> _confirmCheckout() async {
     if (_submitting || _cart.isEmpty) return;
@@ -244,7 +245,7 @@ class _PosPageState extends State<PosPage> {
                                       title: Text(product.name),
                                       subtitle: Text([
                                         if (product.description.trim().isNotEmpty) product.description.trim(),
-                                        '${_money(product.priceCents)} · Stock: ${product.stockQuantity}',
+                                        '${_money(product.priceCents)} · Stock: ${formatIntWithCommas(product.stockQuantity)}',
                                       ].join(' · ')),
                                       trailing: FilledButton.tonalIcon(
                                         key: Key('add-cart-${product.id}'),
@@ -252,7 +253,7 @@ class _PosPageState extends State<PosPage> {
                                             ? null
                                             : () => _changeQuantity(product, quantity + 1),
                                         icon: const Icon(Icons.add_shopping_cart),
-                                        label: Text(quantity == 0 ? 'Add' : '$quantity'),
+                                        label: Text(quantity == 0 ? 'Add' : formatIntWithCommas(quantity)),
                                       ),
                                     ),
                                   );
@@ -282,7 +283,7 @@ class _PosPageState extends State<PosPage> {
                                 onPressed: () => _changeQuantity(product, quantity - 1),
                                 icon: const Icon(Icons.remove_circle_outline),
                               ),
-                              Text('$quantity'),
+                              Text(formatIntWithCommas(quantity)),
                               IconButton(
                                 key: Key('increase-${product.id}'),
                                 onPressed: quantity >= product.stockQuantity
@@ -360,7 +361,7 @@ class _PosPageState extends State<PosPage> {
                             ...sale.lines.map((line) => ListTile(
                               dense: true,
                               title: Text(line.productName),
-                              subtitle: Text('Qty ${line.quantity} × ${_money(line.unitPriceCents)}'),
+                              subtitle: Text('Qty ${formatIntWithCommas(line.quantity)} × ${_money(line.unitPriceCents)}'),
                               trailing: Text(_money(line.lineTotalCents)),
                             )),
                             ListTile(title: const Text('Payment'), trailing: Text(_money(sale.paymentCents))),
