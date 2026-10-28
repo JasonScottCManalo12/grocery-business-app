@@ -55,10 +55,14 @@ class _Sales implements SaleStore {
 
 Future<void> _scrollToPayment(WidgetTester tester) async {
   final payment = find.byKey(const Key('payment-received'));
+  final mainScroll = find.descendant(
+    of: find.byKey(const Key('pos-main-scroll')),
+    matching: find.byType(Scrollable),
+  ).first;
   await tester.scrollUntilVisible(
     payment,
     250,
-    scrollable: find.byType(Scrollable).first,
+    scrollable: mainScroll,
   );
   await tester.pumpAndSettle();
 }
@@ -95,8 +99,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('add-cart-1')));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('payment-received')));
-    await tester.pumpAndSettle();
+    await _scrollToPayment(tester);
     await _scrollToPayment(tester);
     await tester.enterText(find.byKey(const Key('payment-received')), '5.00');
     await tester.pumpAndSettle();
