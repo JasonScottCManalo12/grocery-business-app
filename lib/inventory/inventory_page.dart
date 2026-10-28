@@ -158,7 +158,8 @@ class _InventoryPageState extends State<InventoryPage> {
       if (item.id == id) { product = item; break; }
     }
     if (product == null) return;
-    final quantityController = TextEditingController(text: product.stockQuantity.toString());
+    final selectedProduct = product;
+    final quantityController = TextEditingController(text: selectedProduct.stockQuantity.toString());
     final reasonController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     final result = await showDialog<bool>(
@@ -170,7 +171,7 @@ class _InventoryPageState extends State<InventoryPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Current quantity: ${product.stockQuantity}'),
+              Text('Current quantity: ${selectedProduct.stockQuantity}'),
               TextFormField(
                 key: const Key('inventory-adjust-quantity'),
                 controller: quantityController,
