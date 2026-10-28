@@ -1,6 +1,6 @@
 # Grocery Business App — Project Status
 
-**Last reviewed:** 2026-10-27  
+**Last reviewed:** 2026-10-28  
 **Repository:** `JasonScottCManalo12/grocery-business-app`  
 **Working branch:** `feature/pos-cart-sales`  
 **Default branch:** `main`
@@ -18,19 +18,21 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 | Area | Status | Evidence |
 |---|---|---|
 | Android CI | Operational | Workflow runs Flutter tests, builds split release APKs, and uploads artifacts. |
-| Product catalogue | Implemented | Create, view, edit, search, deactivate; user reports all 6 catalogue smoke tests passed. |
+| Product catalogue | Implemented; description enhancement added | Create, view, edit, search by name/description, deactivate. Product descriptions now persist through schema v4 migration; widget test updated. Latest enhancement CI/device verification pending. |
 | Product SQLite persistence | User-reported device verification complete | Create/edit/deactivate and restart persistence passed. |
-| POS cart and checkout | Implemented on feature branch | Cart, quantities, total/payment/change, checkout confirmation, sale history. User reports all 7 previous POS checks and 4 confirmation-build checks passed on device. |
+| POS cart and checkout | Implemented; usability enhancement added | Cart, quantities, total/payment/change, checkout confirmation, sale history. Searchable, scrollable product picker now matches name/description and displays price/stock. Latest enhancement CI/device verification pending. |
 | Stock quantity cap | Implemented on feature branch | UI/repository validation and SQLite constraints/triggers target 0–999,999; user reports the over-cap device test passed. |
 | Stock movement ledger | Data layer implemented on feature branch | SQLite `stock_movements` table, stock-in/out and adjustment methods, plus sale deduction entries; integration tests added. Inventory movement screen/UI still needs source-level confirmation and wiring if absent. |
-| Sale atomicity | Implemented and integration-tested in code; CI pending final result | Sale header, line items, stock deduction, and sale movement ledger are written inside one SQLite transaction. Failure tests cover insufficient stock/payment rollback. |
+| Sale atomicity | Implemented and integration-tested in code | Sale header, line items, stock deduction, and sale movement ledger are written inside one SQLite transaction. Failure tests cover insufficient stock/payment rollback; see latest workflow for current status. |
 | Web / desktop | Not started | After Android MVP. |
 | Crypto modules | Deferred | Must not delay traditional grocery operations. |
 
 ### Latest workflow evidence
 
 - Confirmation-flow baseline passed: [run 40469645532](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532).
-- New stock-ledger and SQLite integration-test code is on `feature/pos-cart-sales`. Latest run for commit `dd82eae8`: [run 40474176723](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723). Tests passed; split APK build was still running at last check.
+- Stock-ledger and SQLite integration-test baseline: [run 40474176723](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723).
+- Dashboard build baseline: [run 40474375181](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474375181).
+- Product description persistence, case-insensitive duplicate-name guard, and POS search/list enhancements were just committed to `feature/pos-cart-sales`; a new CI run and device retest are required before these changes are considered verified.
 
 ## 3. Smoke-test status (user-reported)
 
@@ -38,16 +40,16 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - [x] Inventory: 6/6, including rejection above 999,999.
 - [x] POS and sales, previous build: 7/7.
 - [x] POS confirmation, latest build: 4/4.
-- [ ] Re-test inventory ledger behavior on an APK built from the current source changes.
-- [ ] Re-test POS and sale history on the APK built from the current source changes.
+- [x] User reports latest-build inventory movement history and POS/sale history regression checks passed.
+- [ ] Re-test product descriptions, duplicate-name validation, and POS search on an APK built from the newest source changes.
 
 ## 4. Current recommendations
 
-1. Confirm the latest workflow finishes successfully and produces APK artifacts.
-2. Inspect and test the inventory UI wiring: the data layer now records stock-in, stock-out, adjustments, and sale deductions, but the repository tree does not currently contain a dedicated inventory screen file.
-3. After installing the newest artifact, verify movement history and sale history survive restart.
-4. Keep `feature/pos-cart-sales` isolated until CI and device checks pass. Do not merge into `main` automatically.
-5. Once verified, update this dashboard with final run/artifact links and the new device results.
+1. Confirm CI passes and produces APK artifacts for the newest description/duplicate-guard/POS-search changes.
+2. Install the newest APK and verify description create/edit/persistence, case-insensitive duplicate rejection, POS name/description search, cart retention during search, stock caps, sale atomicity, and history persistence.
+3. Review inventory UI wiring against the stock-movement data layer; repository source inspection still needs to confirm the UI entry points are present in this branch.
+4. Keep `feature/pos-cart-sales` isolated; do not merge into `main` automatically.
+5. Keep the Suggestions List current and update evidence after CI/device checks.
 
 ## 5. Key links
 
@@ -55,6 +57,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - [GitHub Actions](https://github.com/JasonScottCManalo12/grocery-business-app/actions)
 - [Confirmation-flow workflow](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532)
 - [Current stock-ledger/integration-test workflow](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723)
+- [Suggestions List](https://github.com/JasonScottCManalo12/grocery-business-app/blob/feature/pos-cart-sales/SUGGESTIONS.md)
 - [POS feature branch](https://github.com/JasonScottCManalo12/grocery-business-app/tree/feature/pos-cart-sales)
 
 ## 6. Update protocol
