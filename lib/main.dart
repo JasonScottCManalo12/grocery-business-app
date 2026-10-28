@@ -4,6 +4,7 @@ import 'data/product_repository.dart';
 import 'data/sales_repository.dart';
 import 'models/product.dart';
 import 'pos/pos_page.dart';
+import 'inventory/inventory_page.dart';
 
 void main() => runApp(const MyApp());
 
@@ -261,6 +262,19 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
       appBar: AppBar(
         title: const Text('Grocery Business App'),
         actions: [
+          if (widget.store is ProductRepository)
+            IconButton(
+              key: const Key('open-inventory'),
+              tooltip: 'Open inventory and movement history',
+              icon: const Icon(Icons.inventory_2_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => InventoryPage(
+                    repository: widget.store as ProductRepository,
+                  ),
+                ),
+              ),
+            ),
           IconButton(
             key: const Key('open-pos'),
             tooltip: 'Open POS checkout',
