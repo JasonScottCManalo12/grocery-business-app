@@ -11,7 +11,8 @@
 - [x] Format displayed prices and stock counts with thousands separators (example: `₱1,234.56`, `1,234`).
 - [x] Accept correctly grouped comma-formatted price and quantity inputs (example: `1,234.56`, `1,234`) and reject malformed grouping.
 - [x] CI-verify numeric formatting/parsing helpers and comma-formatted checkout: workflow #78's `flutter test` logs explicitly show passing `test/number_format_test.dart` cases for integer/PHP formatting, grouped in-progress decimals, grouped whole quantities with malformed-grouping rejection, comma-grouped money parsing, and the POS comma-formatted-payment sale regression. Workflow #84 later passed after stock-movement quantity-limit changes. User also confirmed relevant device checks.
-- [ ] Add a database-level uniqueness strategy after reviewing legacy duplicates; do not silently delete or merge records.
+- [ ] Add a database-level uniqueness strategy only after auditing legacy records and validating a safe upgrade path. Never silently delete, merge, rename, or deactivate duplicates.
+- [x] Add a read-only repository audit for legacy product-name collisions using the current `lower(trim(name))` rule; integration test covers a legacy duplicate and confirms both records remain unchanged. CI verification is pending for the new audit helper/test.
 - [ ] Consider optional SKU/barcode support in a later phase.
 
 ## POS and checkout
@@ -51,7 +52,7 @@
 
 ## Latest workflow evidence
 
-- Latest workflow passed: [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), commit `1c92a66c8d043252f02d6f781a37d25926b3279d` (`Enforce stock movement quantity limits`).
+- Latest previously verified workflow passed: [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), commit `1c92a66c8d043252f02d6f781a37d25926b3279d` (`Enforce stock movement quantity limits`). A newer commit adds the read-only duplicate audit and its regression test; its CI result must be checked before calling that change verified.
 - Earlier payment-formatting/checkout regression workflow passed: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`. Its `flutter test` log explicitly lists passing numeric-formatting/parsing tests in `test/number_format_test.dart` and the comma-formatted-payment sale regression in `test/pos_page_test.dart`.
 - Run #78 artifact `grocery-business-app-apks` was approximately 24.5 MB and had an availability window ending 2026-11-11 04:54 UTC; check run #84 for its own current artifact status.
 - User reports all five inventory device checks passed: comma-grouped stock-in, stock-out respecting available stock, adjustment range `0–999,999`, formatted movement history, and persistence after navigation. Record these as user-reported device verification; do not imply CI independently proves device behavior.
