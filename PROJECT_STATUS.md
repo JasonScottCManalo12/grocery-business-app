@@ -18,7 +18,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 | Area | Status | Evidence |
 |---|---|---|
 | Android CI | Operational | Workflow runs Flutter tests, builds split release APKs, and uploads artifacts. |
-| Product catalogue | Implemented; latest numeric-formatting CI green | Create, view, edit, search by name/description, deactivate. Prices and stock display with thousands separators; comma-grouped inputs are parsed. New helper tests are pending CI. |
+| Product catalogue | Implemented; numeric-formatting/parsing tests passed in workflow #78 | Create, view, edit, search by name/description, deactivate. Prices and stock display with thousands separators; comma-grouped inputs are parsed. Run #78 `flutter test` logs explicitly show passing `test/number_format_test.dart` cases for integer/PHP formatting, grouped in-progress decimal input, grouped quantities with malformed-grouping rejection, and comma-grouped decimal money parsing. The POS comma-formatted-payment sale regression also passed. Run #84 later passed after stock-movement quantity-limit changes. |
 | Product SQLite persistence | User-reported device verification complete | Create/edit/deactivate and restart persistence passed. |
 | POS cart and checkout | Implemented; latest payment-formatting/checkout CI green | Cart, quantities, total/payment/change, checkout confirmation, sale history. Prices, payment, change, stock, and quantities now use thousands separators; payment input accepts valid comma grouping; live formatter now groups arbitrarily long values and regression tests cover comma-formatted checkout. |
 | Stock quantity cap | Implemented on feature branch | UI/repository validation and SQLite constraints/triggers target 0–999,999; user reports the over-cap device test passed. |
@@ -34,7 +34,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - Confirmation-flow baseline passed: [run 40469645532](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532).
 - Stock-ledger and SQLite integration-test baseline: [run 40474176723](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723).
 - Dashboard build baseline: [run 40474375181](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474375181).
-- Latest comma-formatting workflow passed: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`; artifact uploaded and available until 2026-11-11.
+- Numeric-formatting/parsing and comma-formatted checkout tests passed in [workflow #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`. The `flutter test` log explicitly names the relevant cases in `test/number_format_test.dart` and `test/pos_page_test.dart`. Workflow #84 subsequently passed after the stock-movement quantity-limit changes. The run #78 APK artifact was uploaded; check the specific run for current availability.
 
 ## 3. Smoke-test status (user-reported)
 
@@ -71,9 +71,9 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 For each milestone: implement the agreed scope, run tests/build, inspect actual results, update this dashboard with evidence, and keep unverified behavior marked as pending. Do not merge a feature branch without explicit approval.
 
 
-Latest CI follow-up: runs #75–77 failed during iterative changes; run #78 passed after the comma-formatted checkout regression test was placed inside the test suite. Newer run #84 passed after stock-movement quantity-limit changes. User reports the five inventory device-verification checks passed: grouped stock-in, stock-out respecting available stock, adjustment range, formatted movement history, and persistence after navigation. These are user-reported device results, not a substitute for CI evidence.
+Latest CI follow-up: runs #75–77 failed during iterative changes; run #78 passed after the comma-formatted checkout regression test was placed inside the test suite. Its logs explicitly confirm the numeric-formatting/parsing helper tests and comma-formatted checkout regression passed. Newer run #84 passed after stock-movement quantity-limit changes. User reports the five inventory device-verification checks passed: grouped stock-in, stock-out respecting available stock, adjustment range, formatted movement history, and persistence after navigation. These are user-reported device results, not a substitute for CI evidence.
 
 
 ## 7. Numeric formatting recommendation
 
-Requested by user: use thousands separators for displayed numeric values, including PHP prices and amounts (`₱1,234.56`) and quantities (`1,234`). Inputs should accept correctly grouped commas and reject malformed grouping. Implementation is on the feature branch; payment-formatting/checkout CI passed in run #78. The later run #84 passed after stock-movement quantity-limit changes. User-confirmed payment-formatting checks are complete. User also reports grouped stock-in/out/adjustment, formatted movement history, and persistence checks passed on device; CI evidence is tracked separately.
+Requested by user: use thousands separators for displayed numeric values, including PHP prices and amounts (`₱1,234.56`) and quantities (`1,234`). Inputs should accept correctly grouped commas and reject malformed grouping. Implementation is on the feature branch; numeric-formatting/parsing helper tests and comma-formatted checkout regression passed in run #78. The later run #84 passed after stock-movement quantity-limit changes. User-confirmed payment-formatting checks are complete. User also reports grouped stock-in/out/adjustment, formatted movement history, and persistence checks passed on device; CI evidence is tracked separately.
