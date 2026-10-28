@@ -96,6 +96,34 @@ void main() {
     expect(await products.getProducts(), hasLength(1));
   });
 
+  test('legacy duplicate-name audit is read-only and finds trimmed case-insensitive collisions', () async {
+    // Simulate records created before application-level duplicate validation.
+    await db.insert('products', {
+      'name': 'Jasmine Rice',
+      'description': '',
+      'price_cents': 8500,
+      'stock_quantity': 12,
+      'is_active': 1,
+    });
+    await db.insert('products', {
+      'name': '  jasmine rice  ',
+      'description': 'Legacy duplicate; preserve this record',
+      'price_cents': 9000,
+      'stock_quantity': 3,
+      'is_active': 0,
+    });
+
+    final groups = await products.findDuplicateProductNameGroups();
+    expect(groups, hasLength(1));
+    expect(groups.single['normalized_name'], 'jasmine rice');
+    expect(groups.single['duplicate_count'], 2);
+    expect((groups.single['product_ids'] as String).split(','), hasLength(2));
+
+    // Auditing must not silently delete, merge, rename, or deactivate records.
+    expect(await db.query('products'), hasLength(2));
+    expect(await db.query('products', where: 'is_active = 0'), hasLength(1));
+  });
+
   test('stock in, stock out, and adjustment write durable movement records', () async {
     final id = await products.saveProduct(const Product(
       name: 'Rice', priceCents: 500, stockQuantity: 10,
