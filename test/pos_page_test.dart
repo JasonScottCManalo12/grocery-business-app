@@ -68,6 +68,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('₱10.00'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('payment-received')));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('payment-received')), '20.00');
     await tester.pumpAndSettle();
     expect(find.text('₱10.00'), findsNWidgets(2));
@@ -83,6 +85,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('add-cart-1')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('payment-received')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('payment-received')), '5.00');
     await tester.pumpAndSettle();
