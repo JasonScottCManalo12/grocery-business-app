@@ -376,9 +376,12 @@ class _InventoryPageState extends State<InventoryPage> {
         .replaceAll(',', '')
         .length;
     final digits = raw;
-    final grouped = digits.isEmpty
-        ? ''
-        : formatIntWithCommas(int.parse(digits));
+    final output = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) output.write(',');
+      output.write(digits[i]);
+    }
+    final grouped = output.toString();
 
     var cursor = 0;
     var seenDigits = 0;
