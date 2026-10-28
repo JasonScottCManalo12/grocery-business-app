@@ -20,7 +20,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 | Android CI | Operational | Workflow runs Flutter tests, builds split release APKs, and uploads artifacts. |
 | Product catalogue | Implemented; comma-formatting update pending CI | Create, view, edit, search by name/description, deactivate. Prices and stock display with thousands separators; comma-grouped inputs are parsed. New helper tests are pending CI. |
 | Product SQLite persistence | User-reported device verification complete | Create/edit/deactivate and restart persistence passed. |
-| POS cart and checkout | Implemented; comma-formatting update pending CI | Cart, quantities, total/payment/change, checkout confirmation, sale history. Prices, payment, change, stock, and quantities now use thousands separators; payment input accepts valid comma grouping. |
+| POS cart and checkout | Implemented; comma-formatting update pending CI | Cart, quantities, total/payment/change, checkout confirmation, sale history. Prices, payment, change, stock, and quantities now use thousands separators; payment input accepts valid comma grouping; live formatter now groups arbitrarily long values and regression tests cover comma-formatted checkout. |
 | Stock quantity cap | Implemented on feature branch | UI/repository validation and SQLite constraints/triggers target 0–999,999; user reports the over-cap device test passed. |
 | Stock movement ledger | Data layer and UI implemented on feature branch | SQLite `stock_movements` table and atomic stock-in/out, adjustment, and sale entries. Inventory counts, deltas, and balances display with thousands separators; comma-grouped quantity inputs are supported. Latest numeric-formatting CI pending. |
 | Sale atomicity | Implemented and integration-tested in code | Sale header, line items, stock deduction, and sale movement ledger are written inside one SQLite transaction. Failure tests cover insufficient stock/payment rollback; see latest workflow for current status. |
@@ -43,6 +43,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - [x] User reports latest-build inventory movement history and POS/sale history regression checks passed.
 - [x] User reports all six checks passed on the previous newest APK: description persistence, duplicate-name validation, POS search/scrolling, cart retention during search, stock limits/movements/sale deductions, and history persistence.
 - [ ] Re-test comma-formatted price and quantity inputs and displayed values on the newest APK.
+- [ ] Verify payment input formats beyond four digits and Complete Sale accepts grouped amounts such as `1,000.00`.
 
 ## 4. Current recommendations
 
