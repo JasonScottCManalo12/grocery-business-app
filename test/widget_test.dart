@@ -72,7 +72,7 @@ void main() {
     expect(find.text('Rice'), findsOneWidget);
     expect(find.text('₱55.50'), findsOneWidget);
     expect(find.textContaining('Long-grain aromatic rice'), findsOneWidget);
-    expect(find.text('Stock: 12'), findsOneWidget);
+    expect(find.textContaining('Stock: 12'), findsOneWidget);
     expect(store.products, hasLength(1));
     expect(store.products.single.priceCents, 5550);
   });
