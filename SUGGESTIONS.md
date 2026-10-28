@@ -23,8 +23,10 @@
 - [x] Format POS prices, totals, payment, change, stock, and quantities with thousands separators.
 - [x] Parse payment amounts containing valid thousands separators.
 - [x] Format valid payment input with thousands separators during the input/change event.
+- [x] Correct live formatting for values longer than four digits and preserve incomplete decimal input while typing.
+- [x] Add regression coverage for multi-group payment input and completing checkout with comma-formatted payment.
 - [x] Refresh POS product/stock data after returning from the Inventory screen.
-- [ ] CI-verify live payment formatting and the inventory-to-POS refresh flow; verify the latest APK on device.
+- [ ] CI-verify live payment formatting, comma-formatted Complete Sale, and the inventory-to-POS refresh flow; verify the latest APK on device.
 
 ## Inventory and sales integrity
 
@@ -48,5 +50,5 @@
 ## Latest workflow evidence
 
 - Last known green baseline before the latest payment-formatting and refresh changes: [run 40623330210](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40623330210).
-- Latest source changes add live payment formatting and route-return refreshes for Catalogue and POS.
+- Latest source changes improve live payment formatting for arbitrarily long grouped values, preserve incomplete decimal input, and add regression tests for comma-formatted Complete Sale. Catalogue/POS route-return refresh remains included.
 - The baseline above predates these latest changes. Check [GitHub Actions](https://github.com/JasonScottCManalo12/grocery-business-app/actions) for the new run; do not treat the prior green run as verification of these changes.
