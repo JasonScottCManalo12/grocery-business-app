@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/product_repository.dart';
 import '../models/product.dart';
 import '../models/stock_movement.dart';
+import '../utils/number_format.dart';
 
 class InventoryPage extends StatefulWidget {
   const InventoryPage({super.key, required this.repository});
@@ -83,7 +84,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Quantity'),
                 validator: (value) {
-                  final quantity = int.tryParse(value?.trim() ?? '');
+                  final quantity = parseCommaSeparatedInt(value ?? '');
                   if (quantity == null || quantity < 1 || quantity > 999999) {
                     return 'Enter a whole quantity from 1 to 999999.';
                   }
@@ -125,7 +126,7 @@ class _InventoryPageState extends State<InventoryPage> {
     try {
       await widget.repository.changeStock(
         productId: id,
-        quantity: int.parse(quantityController.text.trim()),
+        quantity: parseCommaSeparatedInt(quantityController.text)!,
         stockIn: stockIn,
         reason: reasonController.text.trim(),
       );
@@ -159,7 +160,7 @@ class _InventoryPageState extends State<InventoryPage> {
     }
     if (product == null) return;
     final selectedProduct = product;
-    final quantityController = TextEditingController(text: selectedProduct.stockQuantity.toString());
+    final quantityController = TextEditingController(text: formatIntWithCommas(selectedProduct.stockQuantity));
     final reasonController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     final result = await showDialog<bool>(
@@ -171,14 +172,14 @@ class _InventoryPageState extends State<InventoryPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Current quantity: ${selectedProduct.stockQuantity}'),
+              Text('Current quantity: ${formatIntWithCommas(selectedProduct.stockQuantity)}'),
               TextFormField(
                 key: const Key('inventory-adjust-quantity'),
                 controller: quantityController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Counted quantity'),
                 validator: (value) {
-                  final quantity = int.tryParse(value?.trim() ?? '');
+                  final quantity = parseCommaSeparatedInt(value ?? '');
                   if (quantity == null || quantity < 0 || quantity > 999999) {
                     return 'Enter a whole quantity from 0 to 999999.';
                   }
@@ -220,7 +221,7 @@ class _InventoryPageState extends State<InventoryPage> {
     try {
       await widget.repository.adjustStock(
         productId: id,
-        targetQuantity: int.parse(quantityController.text.trim()),
+        targetQuantity: parseCommaSeparatedInt(quantityController.text)!,
         reason: reasonController.text.trim(),
       );
       if (!mounted) return;
@@ -300,7 +301,7 @@ class _InventoryPageState extends State<InventoryPage> {
                             Card(
                               child: ListTile(
                                 title: Text(selectedProduct.name),
-                                subtitle: Text('Available stock: ${selectedProduct.stockQuantity}'),
+                                subtitle: Text('Available stock: ${formatIntWithCommas(selectedProduct.stockQuantity)}'),
                                 trailing: const Icon(Icons.inventory_2_outlined),
                               ),
                             ),
@@ -345,8 +346,8 @@ class _InventoryPageState extends State<InventoryPage> {
                                   movement.quantityDelta > 0 ? Icons.trending_up :
                                       movement.movementType == 'sale' ? Icons.point_of_sale : Icons.trending_down,
                                 ),
-                                title: Text('${_movementLabel(movement)} · ${movement.quantityDelta > 0 ? '+' : ''}${movement.quantityDelta}'),
-                                subtitle: Text('${movement.reason}\nBalance after: ${movement.quantityAfter} · ${movement.createdAt.toLocal()}'),
+                                title: Text('${_movementLabel(movement)} · ${movement.quantityDelta > 0 ? '+' : ''}${formatIntWithCommas(movement.quantityDelta)}'),
+                                subtitle: Text('${movement.reason}\nBalance after: ${formatIntWithCommas(movement.quantityAfter)} · ${movement.createdAt.toLocal()}'),
                                 isThreeLine: true,
                               ),
                             )),
