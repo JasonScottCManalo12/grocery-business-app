@@ -63,3 +63,6 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 ## 6. Update protocol
 
 For each milestone: implement the agreed scope, run tests/build, inspect actual results, update this dashboard with evidence, and keep unverified behavior marked as pending. Do not merge a feature branch without explicit approval.
+
+
+Latest CI diagnosis: three POS tests failed because tests targeted the nested product list instead of the outer checkout list; the POS page now exposes a stable key for the outer list and tests scroll that list. Duplicate-name SQL validation no longer passes null arguments. Await fresh CI verification.
