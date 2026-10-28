@@ -20,6 +20,35 @@ class _Products implements ProductStore {
 
   @override
   Future<void> deactivateProduct(int id) async {}
+  testWidgets('comma-formatted payment can complete a sale and supports many digits', (tester) async {
+    final products = _Products();
+    final sales = _Sales();
+    await tester.pumpWidget(MaterialApp(
+      home: PosPage(products: products, sales: sales),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('add-cart-1')));
+    await tester.pumpAndSettle();
+    await _scrollToPayment(tester);
+
+    final field = find.byKey(const Key('payment-received'));
+    await tester.enterText(field, '1234567.00');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, '1,234,567.00');
+    expect(find.text('₱1,234,562.00'), findsOneWidget);
+
+    await tester.enterText(field, '1,000.00');
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, '1,000.00');
+    await tester.tap(find.byKey(const Key('complete-sale')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sale-confirmation-dialog')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('confirm-sale')));
+    await tester.pumpAndSettle();
+    expect(sales.completedCount, 1);
+    expect(sales.history.first.paymentCents, 100000);
+  });
+
 }
 
 class _Sales implements SaleStore {
