@@ -20,7 +20,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 | Android CI | Operational | Workflow runs Flutter tests, builds split release APKs, and uploads artifacts. |
 | Product catalogue | Implemented; numeric-formatting/parsing tests passed in workflow #78 | Create, view, edit, search by name/description, deactivate. Prices and stock display with thousands separators; comma-grouped inputs are parsed. Run #78 `flutter test` logs explicitly show passing `test/number_format_test.dart` cases for integer/PHP formatting, grouped in-progress decimal input, grouped quantities with malformed-grouping rejection, and comma-grouped decimal money parsing. The POS comma-formatted-payment sale regression also passed. Run #84 later passed after stock-movement quantity-limit changes. |
 | Product SQLite persistence | User-reported device verification complete | Create/edit/deactivate and restart persistence passed. |
-| Legacy product-name duplicate audit | Implemented on feature branch; CI pending | Read-only repository method groups rows colliding under `lower(trim(name))`; integration test inserts a legacy duplicate directly and asserts both records remain intact. This does not yet enforce a database uniqueness constraint. |
+| Legacy product-name duplicate audit | Implemented; CI passed in workflow #95 | Read-only repository method groups rows colliding under `lower(trim(name))`; integration test inserts a legacy duplicate directly and asserts both records remain intact. Workflow #95 reports 20 tests passed. This is repository/test coverage, not a user-facing audit screen or physical-device verification, and does not enforce a database uniqueness constraint. |
 | POS cart and checkout | Implemented; latest payment-formatting/checkout CI green | Cart, quantities, total/payment/change, checkout confirmation, sale history. Prices, payment, change, stock, and quantities now use thousands separators; payment input accepts valid comma grouping; live formatter now groups arbitrarily long values and regression tests cover comma-formatted checkout. |
 | Stock quantity cap | Implemented on feature branch | UI/repository validation and SQLite constraints/triggers target 0–999,999; user reports the over-cap device test passed. |
 | Stock movement ledger | Implemented; latest CI green; user-reported device checks passed | SQLite `stock_movements` table and atomic stock-in/out, adjustment, and sale entries. Inventory counts, deltas, and balances display with thousands separators; comma-grouped quantity inputs are supported. User reports grouped stock-in, stock-out respecting available stock, adjustments within `0–999,999`, formatted movement history, and persistence after navigation all passed on device. |
@@ -30,8 +30,8 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 
 ### Latest workflow evidence
 
-- **Latest CI passed:** [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), commit `1c92a66c8d043252f02d6f781a37d25926b3279d` (`Enforce stock movement quantity limits`). Earlier payment-formatting/checkout CI also passed in [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997).
-- **APK artifact:** `grocery-business-app-apks`, 24,516,655 bytes (~24.5 MB), available until 2026-11-11 04:54 UTC.
+- **Latest CI passed:** [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485), commit `6fa2e53bfc94890f7a156df6073c635ae8641c4d`; 20 tests passed, including the legacy duplicate-name audit test, and split APKs were built and uploaded. Workflow #84 remains the earlier stock-movement quantity-limit evidence; workflow #78 remains the earlier numeric-formatting/checkout evidence.
+- **Latest APK artifact:** `grocery-business-app-apks`, 24,523,334 bytes (~24.5 MB), available until 2026-11-11 07:58 UTC according to the artifact record. [Open workflow #95 to download](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485).
 - Confirmation-flow baseline passed: [run 40469645532](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532).
 - Stock-ledger and SQLite integration-test baseline: [run 40474176723](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723).
 - Dashboard build baseline: [run 40474375181](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474375181).
@@ -47,16 +47,17 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - [x] User reports all five inventory device-verification checks passed: comma-formatted stock-in (e.g. `1,234`); stock-out respecting available stock; adjustments within `0–999,999`; formatted movement quantities/balances in history; and inventory persistence after navigating away and returning.
 - [x] User reports all six checks passed on the previous newest APK: description persistence, duplicate-name validation, POS search/scrolling, cart retention during search, stock limits/movements/sale deductions, and history persistence.
 - [x] User confirmed all latest device checks, including live comma grouping beyond four digits and Complete Sale accepting comma-formatted payment.
-- [x] Latest GitHub Actions workflow passed on commit `3f3505ec1d68ccd357db4a836e46b63f4a760584` and produced the APK artifact above.
+- [x] Workflow #95 CI passed with 20 tests and produced a split-APK artifact; this is CI/build evidence, not confirmation of physical-device behavior for the latest APK.
+- [ ] Install the workflow #95 APK and run a current device smoke test. The duplicate audit currently has repository/test coverage only; no user-facing audit screen is documented, so do not mark the audit as device-verified.
 
 ## 4. Current recommendations
 
-1. Latest CI is green: [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), including the stock-movement quantity-limit change. Verify the run's artifact before treating it as the newest installable APK.
+1. Latest CI is green: [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485); 20 tests passed and the APK artifact was uploaded. Install that artifact and run the current device smoke test before claiming latest-build device verification.
 2. Inventory device verification: user reports all five checks passed—comma-formatted stock-in, stock-out within available stock, adjustments within `0–999,999`, formatted movement history, and persistence after navigation. Treat this as user-reported device evidence; CI status remains independently tracked.
-3. Product-name uniqueness: added a read-only legacy duplicate audit and a regression test that confirms no records are deleted or merged; CI is pending. Next, run CI and determine how to inspect any duplicates on existing device databases. Only add a database-level unique index after a safe migration path is proven; optional SKU/barcode support remains a later-phase consideration.
+3. Product-name uniqueness: the read-only legacy duplicate audit and regression test passed CI in workflow #95. The audit is repository-only, with no user-facing screen documented. Determine how to inspect duplicates in existing device databases; add a database-level unique index only after a safe migration path is proven. Optional SKU/barcode support remains a later-phase consideration.
 4. Inventory costing direction: WAC is the provisional working choice documented in [`KEEP_IN_MIND.md`](https://github.com/JasonScottCManalo12/grocery-business-app/blob/feature/pos-cart-sales/KEEP_IN_MIND.md); costing implementation and tests still require separate verification.
 5. Keep `feature/pos-cart-sales` isolated; do not merge into `main` without explicit approval.
-6. Keep this dashboard and `SUGGESTIONS.md` aligned with current CI/device evidence. The latest duplicate-audit helper/test is not CI-verified until its workflow completes.
+6. Keep this dashboard and `SUGGESTIONS.md` aligned with current CI/device evidence. Both now record workflow #95 as passed; latest APK device smoke testing remains pending.
 
 ## 5. Key links
 
@@ -72,7 +73,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 For each milestone: implement the agreed scope, run tests/build, inspect actual results, update this dashboard with evidence, and keep unverified behavior marked as pending. Do not merge a feature branch without explicit approval.
 
 
-Latest CI follow-up: runs #75–77 failed during iterative changes; run #78 passed after the comma-formatted checkout regression test was placed inside the test suite. Its logs explicitly confirm the numeric-formatting/parsing helper tests and comma-formatted checkout regression passed. Newer run #84 passed after stock-movement quantity-limit changes. User reports the five inventory device-verification checks passed: grouped stock-in, stock-out respecting available stock, adjustment range, formatted movement history, and persistence after navigation. These are user-reported device results, not a substitute for CI evidence.
+Latest CI follow-up: runs #75–77 failed during iterative changes; run #78 passed after the comma-formatted checkout regression test was placed inside the test suite. Run #84 passed after stock-movement quantity-limit changes. Latest run #95 passed with 20 tests, including the read-only legacy duplicate-name audit regression test, and uploaded the APK artifact. User reports the five inventory device-verification checks passed: grouped stock-in, stock-out respecting available stock, adjustment range, formatted movement history, and persistence after navigation. These are user-reported device results, not a substitute for CI evidence.
 
 
 ## 7. Numeric formatting recommendation
