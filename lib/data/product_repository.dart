@@ -221,6 +221,24 @@ class ProductRepository implements ProductStore {
   }
 
   @override
+  /// Audits legacy records for product names that collide under the same
+  /// trim-and-lowercase rule used by saveProduct. This is read-only: it never
+  /// deletes, merges, renames, or deactivates products.
+  Future<List<Map<String, Object?>>> findDuplicateProductNameGroups() async {
+    final db = await database;
+    return db.rawQuery('''
+      SELECT
+        lower(trim(name)) AS normalized_name,
+        MIN(trim(name)) AS example_name,
+        COUNT(*) AS duplicate_count,
+        group_concat(id, ',') AS product_ids
+      FROM products
+      GROUP BY lower(trim(name))
+      HAVING COUNT(*) > 1
+      ORDER BY lower(trim(name)) ASC
+    ''');
+  }
+
   Future<int> saveProduct(Product product) async {
     final name = product.name.trim();
     if (name.isEmpty) throw ArgumentError('Product name is required.');
