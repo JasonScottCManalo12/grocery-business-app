@@ -21,6 +21,7 @@ class MemoryProductStore implements ProductStore {
       final saved = Product(
         id: _nextId++,
         name: product.name,
+        description: product.description,
         priceCents: product.priceCents,
         stockQuantity: product.stockQuantity,
         isActive: product.isActive,
@@ -42,6 +43,7 @@ class MemoryProductStore implements ProductStore {
     products[index] = Product(
       id: product.id,
       name: product.name,
+      description: product.description,
       priceCents: product.priceCents,
       stockQuantity: product.stockQuantity,
       isActive: false,
@@ -61,6 +63,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byKey(const Key('product-name')), 'Rice');
+    await tester.enterText(find.byKey(const Key('product-description')), 'Long-grain aromatic rice');
     await tester.enterText(find.byKey(const Key('product-price')), '55.50');
     await tester.enterText(find.byKey(const Key('product-stock')), '12');
     await tester.tap(find.byKey(const Key('save-product')));
@@ -68,6 +71,7 @@ void main() {
 
     expect(find.text('Rice'), findsOneWidget);
     expect(find.text('₱55.50'), findsOneWidget);
+    expect(find.textContaining('Long-grain aromatic rice'), findsOneWidget);
     expect(find.text('Stock: 12'), findsOneWidget);
     expect(store.products, hasLength(1));
     expect(store.products.single.priceCents, 5550);
