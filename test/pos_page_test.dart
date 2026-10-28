@@ -55,16 +55,21 @@ class _Sales implements SaleStore {
 
 Future<void> _scrollToPayment(WidgetTester tester) async {
   final payment = find.byKey(const Key('payment-received'));
-  final mainScroll = find.descendant(
-    of: find.byKey(const Key('pos-main-scroll')),
-    matching: find.byType(Scrollable),
-  ).first;
-  await tester.scrollUntilVisible(
-    payment,
-    250,
-    scrollable: mainScroll,
-  );
-  await tester.pumpAndSettle();
+  final outerList = find.byKey(const Key('pos-main-scroll'));
+
+  // Drag the keyed ListView directly instead of searching for its internal
+  // Scrollable, whose location differs across Flutter widget implementations.
+  for (var attempt = 0; attempt < 12; attempt++) {
+    if (payment.evaluate().isNotEmpty) {
+      await tester.ensureVisible(payment);
+      await tester.pumpAndSettle();
+      return;
+    }
+    await tester.drag(outerList, const Offset(0, -450));
+    await tester.pumpAndSettle();
+  }
+
+  expect(payment, findsOneWidget);
 }
 
 void main() {
