@@ -25,6 +25,7 @@ class _PosPageState extends State<PosPage> {
   bool _loading = true;
   bool _submitting = false;
   String? _error;
+  bool _formattingPayment = false;
 
   int get _totalCents => _products.fold<int>(0, (sum, product) {
         final quantity = _cart[product.id] ?? 0;
@@ -40,7 +41,7 @@ class _PosPageState extends State<PosPage> {
   @override
   void initState() {
     super.initState();
-    _paymentController.addListener(_refresh);
+    _paymentController.addListener(_onPaymentChanged);
     _productSearchController.addListener(_refresh);
     _load();
   }
@@ -48,12 +49,48 @@ class _PosPageState extends State<PosPage> {
   @override
   void dispose() {
     _paymentController
-      ..removeListener(_refresh)
+      ..removeListener(_onPaymentChanged)
       ..dispose();
     _productSearchController
       ..removeListener(_refresh)
       ..dispose();
     super.dispose();
+  }
+
+  void _onPaymentChanged() {
+    if (_formattingPayment) {
+      _refresh();
+      return;
+    }
+    final text = _paymentController.text;
+    final selection = _paymentController.selection;
+    final parsed = parseCommaSeparatedDouble(text);
+    if (parsed != null && parsed.isFinite) {
+      final normalized = parsed == parsed.truncateToDouble()
+          ? formatIntWithCommas(parsed.toInt())
+          : _formatPaymentDecimal(text);
+      if (normalized != text) {
+        final cursorFromEnd = text.length - selection.baseOffset;
+        _formattingPayment = true;
+        _paymentController.value = TextEditingValue(
+          text: normalized,
+          selection: TextSelection.collapsed(
+            offset: (normalized.length - cursorFromEnd).clamp(0, normalized.length),
+          ),
+        );
+        _formattingPayment = false;
+      }
+    }
+    _refresh();
+  }
+
+  String _formatPaymentDecimal(String text) {
+    final clean = text.replaceAll(',', '');
+    final dot = clean.indexOf('.');
+    if (dot < 0) return formatIntWithCommas(int.parse(clean));
+    final whole = clean.substring(0, dot).isEmpty ? '0' : clean.substring(0, dot);
+    final fraction = clean.substring(dot + 1);
+    return '${formatIntWithCommas(int.parse(whole))}.$fraction';
   }
 
   void _refresh() {
@@ -116,16 +153,11 @@ class _PosPageState extends State<PosPage> {
             children: [
               const Text('Review this transaction before completing checkout.'),
               const SizedBox(height: 12),
-              ..._products
-                  .where((product) => _cart.containsKey(product.id))
-                  .map((product) {
+              ..._products.where((product) => _cart.containsKey(product.id)).map((product) {
                 final quantity = _cart[product.id]!;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
-                    '${product.name} × $quantity — '
-                    '${_money(product.priceCents * quantity)}',
-                  ),
+                  child: Text('${product.name} × $quantity — ${_money(product.priceCents * quantity)}'),
                 );
               }),
               const Divider(),
@@ -195,8 +227,7 @@ class _PosPageState extends State<PosPage> {
     final cartLines = _products.where((p) => _cart.containsKey(p.id)).toList();
     final query = _productSearchController.text.trim().toLowerCase();
     final visibleProducts = _products.where((product) =>
-      product.name.toLowerCase().contains(query) ||
-      product.description.toLowerCase().contains(query)).toList(growable: false);
+      product.name.toLowerCase().contains(query) || product.description.toLowerCase().contains(query)).toList(growable: false);
     return Scaffold(
       appBar: AppBar(title: const Text('POS Checkout')),
       body: _loading
@@ -249,9 +280,7 @@ class _PosPageState extends State<PosPage> {
                                       ].join(' · ')),
                                       trailing: FilledButton.tonalIcon(
                                         key: Key('add-cart-${product.id}'),
-                                        onPressed: product.stockQuantity <= quantity
-                                            ? null
-                                            : () => _changeQuantity(product, quantity + 1),
+                                        onPressed: product.stockQuantity <= quantity ? null : () => _changeQuantity(product, quantity + 1),
                                         icon: const Icon(Icons.add_shopping_cart),
                                         label: Text(quantity == 0 ? 'Add' : formatIntWithCommas(quantity)),
                                       ),
@@ -273,7 +302,7 @@ class _PosPageState extends State<PosPage> {
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(product.name),
-                          subtitle: Text('${_money(product.priceCents)} × $quantity = ${_money(product.priceCents * quantity)}'),
+                          subtitle: Text('${_money(product.priceCents)} × ${formatIntWithCommas(quantity)} = ${_money(product.priceCents * quantity)}'),
                           trailing: Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,
                             spacing: 2,
@@ -286,9 +315,7 @@ class _PosPageState extends State<PosPage> {
                               Text(formatIntWithCommas(quantity)),
                               IconButton(
                                 key: Key('increase-${product.id}'),
-                                onPressed: quantity >= product.stockQuantity
-                                    ? null
-                                    : () => _changeQuantity(product, quantity + 1),
+                                onPressed: quantity >= product.stockQuantity ? null : () => _changeQuantity(product, quantity + 1),
                                 icon: const Icon(Icons.add_circle_outline),
                               ),
                               IconButton(
@@ -304,11 +331,7 @@ class _PosPageState extends State<PosPage> {
                       const Divider(),
                       ListTile(
                         title: const Text('Subtotal / Total'),
-                        trailing: Text(
-                          _money(_totalCents),
-                          key: const Key('pos-total'),
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
+                        trailing: Text(_money(_totalCents), key: const Key('pos-total'), style: Theme.of(context).textTheme.titleLarge),
                       ),
                       TextField(
                         key: const Key('payment-received'),
@@ -324,9 +347,7 @@ class _PosPageState extends State<PosPage> {
                       ListTile(
                         title: const Text('Change'),
                         trailing: Text(
-                          _paymentCents >= _totalCents && _paymentCents >= 0
-                              ? _money(_paymentCents - _totalCents)
-                              : '—',
+                          _paymentCents >= _totalCents && _paymentCents >= 0 ? _money(_paymentCents - _totalCents) : '—',
                           key: const Key('pos-change'),
                         ),
                       ),
@@ -337,12 +358,8 @@ class _PosPageState extends State<PosPage> {
                         ),
                       FilledButton.icon(
                         key: const Key('complete-sale'),
-                        onPressed: _submitting || _cart.isEmpty || _paymentCents < _totalCents
-                            ? null
-                            : _confirmCheckout,
-                        icon: _submitting
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.point_of_sale),
+                        onPressed: _submitting || _cart.isEmpty || _paymentCents < _totalCents ? null : _confirmCheckout,
+                        icon: _submitting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.point_of_sale),
                         label: Text(_submitting ? 'Completing sale…' : 'Complete sale'),
                       ),
                       const Divider(height: 32),
