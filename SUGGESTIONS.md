@@ -22,7 +22,9 @@
 - [x] Preserve checkout confirmation and transactional sale/stock movement safeguards.
 - [x] Format POS prices, totals, payment, change, stock, and quantities with thousands separators.
 - [x] Parse payment amounts containing valid thousands separators.
-- [ ] CI-verify comma formatting and parsing; verify the latest APK on device.
+- [x] Format valid payment input with thousands separators during the input/change event.
+- [x] Refresh POS product/stock data after returning from the Inventory screen.
+- [ ] CI-verify live payment formatting and the inventory-to-POS refresh flow; verify the latest APK on device.
 
 ## Inventory and sales integrity
 
@@ -30,19 +32,21 @@
 - [x] Write sale header, sale items, stock deduction, and sale movement inside one SQLite transaction.
 - [x] Add Inventory & Movement History screen with reasons, balances, and movement history.
 - [x] Format inventory counts and movement deltas/balances with thousands separators.
-- [ ] Re-test comma-formatted stock-in/out/adjustment quantities and formatted history on the newest APK.
+- [x] Reload inventory data after stock-in/out/adjustment operations.
+- [x] Refresh the product catalogue after returning from Inventory, so the new stock balance is displayed automatically.
+- [ ] Re-test comma-formatted stock-in/out/adjustment quantities, formatted history, and catalogue/POS automatic refresh on the newest APK.
 
 ## Release and project management
 
 - [x] Keep work isolated on `feature/pos-cart-sales`.
 - [x] Update `PROJECT_STATUS.md` and this suggestions list.
 - [x] User reports the six latest APK smoke checks passed before the comma-formatting changes.
-- [ ] Confirm CI passes after the comma-formatting changes and save the new run/artifact link.
+- [ ] Confirm CI passes after the latest payment-formatting and refresh changes and save the new run/artifact link.
 - [ ] Install and smoke-test the newest APK before requesting any merge.
 - [x] Keep web, desktop, and crypto modules from delaying the traditional Android MVP.
 
 ## Latest workflow evidence
 
-- Last known green baseline before comma-formatting changes: [run 40613572887](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40613572887).
-- Latest source changes add `lib/utils/number_format.dart`, update product/POS/inventory displays and input parsing, and add `test/number_format_test.dart`.
-- The baseline above predates these comma-formatting changes. Check [GitHub Actions](https://github.com/JasonScottCManalo12/grocery-business-app/actions) for the new run; do not treat the prior green run as verification of the new changes.
+- Last known green baseline before the latest payment-formatting and refresh changes: [run 40623330210](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40623330210).
+- Latest source changes add live payment formatting and route-return refreshes for Catalogue and POS.
+- The baseline above predates these latest changes. Check [GitHub Actions](https://github.com/JasonScottCManalo12/grocery-business-app/actions) for the new run; do not treat the prior green run as verification of these changes.
