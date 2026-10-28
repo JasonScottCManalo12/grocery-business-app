@@ -22,7 +22,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 | Product SQLite persistence | User-reported device verification complete | Create/edit/deactivate and restart persistence passed. |
 | POS cart and checkout | Implemented; usability enhancement added | Cart, quantities, total/payment/change, checkout confirmation, sale history. Searchable, scrollable product picker now matches name/description and displays price/stock. Latest enhancement CI/device verification pending. |
 | Stock quantity cap | Implemented on feature branch | UI/repository validation and SQLite constraints/triggers target 0–999,999; user reports the over-cap device test passed. |
-| Stock movement ledger | Data layer implemented on feature branch | SQLite `stock_movements` table, stock-in/out and adjustment methods, plus sale deduction entries; integration tests added. Inventory movement screen/UI still needs source-level confirmation and wiring if absent. |
+| Stock movement ledger | Data layer and initial UI implemented on feature branch | SQLite `stock_movements` table and atomic stock-in/out, adjustment, and sale entries. New Inventory & Movement History screen is wired from the catalogue; CI and device verification pending. |
 | Sale atomicity | Implemented and integration-tested in code | Sale header, line items, stock deduction, and sale movement ledger are written inside one SQLite transaction. Failure tests cover insufficient stock/payment rollback; see latest workflow for current status. |
 | Web / desktop | Not started | After Android MVP. |
 | Crypto modules | Deferred | Must not delay traditional grocery operations. |
@@ -32,7 +32,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - Confirmation-flow baseline passed: [run 40469645532](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532).
 - Stock-ledger and SQLite integration-test baseline: [run 40474176723](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723).
 - Dashboard build baseline: [run 40474375181](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474375181).
-- Product description persistence, case-insensitive duplicate-name guard, and POS search/list enhancements were just committed to `feature/pos-cart-sales`; a new CI run and device retest are required before these changes are considered verified.
+- Product description persistence, duplicate-name guard, POS search/list, inventory UI, and integration-test updates have been committed to `feature/pos-cart-sales`; a new CI run and device retest are required before these changes are considered verified.
 
 ## 3. Smoke-test status (user-reported)
 
@@ -47,9 +47,9 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 
 1. Confirm CI passes and produces APK artifacts for the newest description/duplicate-guard/POS-search changes.
 2. Install the newest APK and verify description create/edit/persistence, case-insensitive duplicate rejection, POS name/description search, cart retention during search, stock caps, sale atomicity, and history persistence.
-3. Review inventory UI wiring against the stock-movement data layer; repository source inspection still needs to confirm the UI entry points are present in this branch.
+3. Inventory UI entry point and stock movement screen have now been added; verify stock-in/out/adjustment forms and movement history in CI and on-device.
 4. Keep `feature/pos-cart-sales` isolated; do not merge into `main` automatically.
-5. Keep the Suggestions List current and update evidence after CI/device checks.
+5. Keep the Suggestions List current and update evidence after CI/device checks. The integration test fixture now includes the product description column and tests description persistence plus case-insensitive duplicate rejection.
 
 ## 5. Key links
 
