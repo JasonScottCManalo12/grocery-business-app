@@ -10,6 +10,7 @@ Future<Database> _openDatabase() async {
     CREATE TABLE products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL COLLATE NOCASE,
+      description TEXT NOT NULL DEFAULT '',
       price_cents INTEGER NOT NULL CHECK(price_cents > 0),
       stock_quantity INTEGER NOT NULL CHECK(stock_quantity >= 0 AND stock_quantity <= 999999),
       is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1)),
@@ -69,6 +70,30 @@ void main() {
 
   tearDown(() async {
     await db.close();
+  });
+
+
+  test('product descriptions persist and duplicate names are rejected', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Jasmine Rice 1 kg',
+      description: 'Fragrant long-grain rice',
+      priceCents: 8500,
+      stockQuantity: 12,
+    ));
+    final saved = (await products.getProducts()).single;
+    expect(saved.id, id);
+    expect(saved.description, 'Fragrant long-grain rice');
+
+    await expectLater(
+      products.saveProduct(const Product(
+        name: '  jasmine rice 1 KG ',
+        description: 'Accidental duplicate',
+        priceCents: 9000,
+        stockQuantity: 3,
+      )),
+      throwsStateError,
+    );
+    expect(await products.getProducts(), hasLength(1));
   });
 
   test('stock in, stock out, and adjustment write durable movement records', () async {
