@@ -17,6 +17,7 @@ class PosPage extends StatefulWidget {
 
 class _PosPageState extends State<PosPage> {
   final _paymentController = TextEditingController();
+  final _productSearchController = TextEditingController();
   List<Product> _products = [];
   List<SaleReceipt> _history = [];
   final Map<int, int> _cart = {};
@@ -39,12 +40,16 @@ class _PosPageState extends State<PosPage> {
   void initState() {
     super.initState();
     _paymentController.addListener(_refresh);
+    _productSearchController.addListener(_refresh);
     _load();
   }
 
   @override
   void dispose() {
     _paymentController
+      ..removeListener(_refresh)
+      ..dispose();
+    _productSearchController
       ..removeListener(_refresh)
       ..dispose();
     super.dispose();
@@ -187,6 +192,10 @@ class _PosPageState extends State<PosPage> {
   @override
   Widget build(BuildContext context) {
     final cartLines = _products.where((p) => _cart.containsKey(p.id)).toList();
+    final query = _productSearchController.text.trim().toLowerCase();
+    final visibleProducts = _products.where((product) =>
+      product.name.toLowerCase().contains(query) ||
+      product.description.toLowerCase().contains(query)).toList(growable: false);
     return Scaffold(
       appBar: AppBar(title: const Text('POS Checkout')),
       body: _loading
@@ -202,24 +211,54 @@ class _PosPageState extends State<PosPage> {
                       const SizedBox(height: 8),
                       if (_products.isEmpty)
                         const Text('Add active products in the catalogue before checkout.')
-                      else
-                        ..._products.map((product) {
-                          final quantity = _cart[product.id] ?? 0;
-                          return Card(
-                            child: ListTile(
-                              title: Text(product.name),
-                              subtitle: Text('${_money(product.priceCents)} · Stock: ${product.stockQuantity}'),
-                              trailing: FilledButton.tonalIcon(
-                                key: Key('add-cart-${product.id}'),
-                                onPressed: product.stockQuantity <= quantity
-                                    ? null
-                                    : () => _changeQuantity(product, quantity + 1),
-                                icon: const Icon(Icons.add_shopping_cart),
-                                label: Text(quantity == 0 ? 'Add' : '$quantity'),
-                              ),
+                      else ...[
+                        TextField(
+                          key: const Key('pos-product-search'),
+                          controller: _productSearchController,
+                          decoration: InputDecoration(
+                            labelText: 'Search products',
+                            hintText: 'Name or description',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _productSearchController.text.isEmpty ? null : IconButton(
+                              tooltip: 'Clear product search',
+                              onPressed: _productSearchController.clear,
+                              icon: const Icon(Icons.clear),
                             ),
-                          );
-                        }),
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 260,
+                          child: visibleProducts.isEmpty
+                            ? const Center(child: Text('No matching products'))
+                            : ListView.builder(
+                                key: const Key('pos-product-list'),
+                                itemCount: visibleProducts.length,
+                                itemBuilder: (context, index) {
+                                  final product = visibleProducts[index];
+                                  final quantity = _cart[product.id] ?? 0;
+                                  return Card(
+                                    child: ListTile(
+                                      title: Text(product.name),
+                                      subtitle: Text([
+                                        if (product.description.trim().isNotEmpty) product.description.trim(),
+                                        '${_money(product.priceCents)} · Stock: ${product.stockQuantity}',
+                                      ].join(' · ')),
+                                      trailing: FilledButton.tonalIcon(
+                                        key: Key('add-cart-${product.id}'),
+                                        onPressed: product.stockQuantity <= quantity
+                                            ? null
+                                            : () => _changeQuantity(product, quantity + 1),
+                                        icon: const Icon(Icons.add_shopping_cart),
+                                        label: Text(quantity == 0 ? 'Add' : '$quantity'),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                        ),
+                      ],
                       const Divider(height: 28),
                       Text('Cart', style: Theme.of(context).textTheme.titleLarge),
                       if (cartLines.isEmpty)
