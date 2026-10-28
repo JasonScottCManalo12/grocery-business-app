@@ -53,6 +53,16 @@ class _Sales implements SaleStore {
   Future<List<SaleReceipt>> getSales() async => List.of(history);
 }
 
+Future<void> _scrollToPayment(WidgetTester tester) async {
+  final payment = find.byKey(const Key('payment-received'));
+  await tester.scrollUntilVisible(
+    payment,
+    250,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('cart quantities, total, payment and change work', (tester) async {
     final products = _Products();
@@ -68,8 +78,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('₱10.00'), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const Key('payment-received')));
-    await tester.pumpAndSettle();
+    await _scrollToPayment(tester);
     await tester.enterText(find.byKey(const Key('payment-received')), '20.00');
     await tester.pumpAndSettle();
     expect(find.text('₱10.00'), findsNWidgets(2));
@@ -88,6 +97,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const Key('payment-received')));
     await tester.pumpAndSettle();
+    await _scrollToPayment(tester);
     await tester.enterText(find.byKey(const Key('payment-received')), '5.00');
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('complete-sale')));
