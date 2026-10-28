@@ -27,3 +27,22 @@ double? parseCommaSeparatedDouble(String input) {
   if (!valid.hasMatch(value)) return null;
   return double.tryParse(value.replaceAll(',', ''));
 }
+
+/// Formats an in-progress decimal input with grouping separators.
+///
+/// Unlike [parseCommaSeparatedDouble], this accepts temporarily incomplete
+/// input such as `1234.` while the user is still typing.
+String? formatEditableGroupedDecimal(String input) {
+  final clean = input.replaceAll(',', '');
+  if (clean.isEmpty) return '';
+  if (!RegExp(r'^\d*(?:\.\d*)?$').hasMatch(clean)) return null;
+
+  final dot = clean.indexOf('.');
+  final wholeText = dot < 0 ? clean : clean.substring(0, dot);
+  final fraction = dot < 0 ? null : clean.substring(dot + 1);
+  final whole = wholeText.isEmpty ? '0' : wholeText;
+  final parsedWhole = int.tryParse(whole);
+  if (parsedWhole == null) return null;
+  final groupedWhole = formatIntWithCommas(parsedWhole);
+  return fraction == null ? groupedWhole : '$groupedWhole.$fraction';
+}
