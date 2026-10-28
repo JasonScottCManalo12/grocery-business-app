@@ -87,6 +87,28 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
         .toList(growable: false);
   }
 
+  Future<void> _openInventory() async {
+    if (widget.store is! ProductRepository) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => InventoryPage(repository: widget.store as ProductRepository),
+      ),
+    );
+    await _loadProducts();
+  }
+
+  Future<void> _openPos() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PosPage(
+          products: widget.store,
+          sales: SaleRepository(),
+        ),
+      ),
+    );
+    await _loadProducts();
+  }
+
   Future<void> _openProductForm({Product? product}) async {
     final saved = await showDialog<bool>(
       context: context,
@@ -94,8 +116,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
         final formKey = GlobalKey<FormState>();
         var name = product?.name ?? '';
         var description = product?.description ?? '';
-        var priceText =
-            product == null ? '' : formatMoneyCents(product.priceCents).replaceFirst('₱', '');
+        var priceText = product == null ? '' : formatMoneyCents(product.priceCents).replaceFirst('₱', '');
         var stockText = product == null ? '0' : formatIntWithCommas(product.stockQuantity);
 
         return AlertDialog(
@@ -113,9 +134,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                     textCapitalization: TextCapitalization.words,
                     decoration: const InputDecoration(labelText: 'Product name'),
                     onChanged: (value) => name = value,
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter a product name.'
-                        : null,
+                    validator: (value) => value == null || value.trim().isEmpty ? 'Enter a product name.' : null,
                   ),
                   TextFormField(
                     key: const Key('product-description'),
@@ -123,27 +142,18 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                     minLines: 2,
                     maxLines: 4,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Description (optional)',
-                      alignLabelWithHint: true,
-                    ),
+                    decoration: const InputDecoration(labelText: 'Description (optional)', alignLabelWithHint: true),
                     onChanged: (value) => description = value,
                   ),
                   TextFormField(
                     key: const Key('product-price'),
                     initialValue: priceText,
-                    decoration: const InputDecoration(
-                      labelText: 'Selling price (PHP)',
-                      prefixText: '₱ ',
-                    ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Selling price (PHP)', prefixText: '₱ '),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     onChanged: (value) => priceText = value,
                     validator: (value) {
                       final amount = parseCommaSeparatedDouble(value ?? '');
-                      if (amount == null || !amount.isFinite || amount <= 0) {
-                        return 'Enter a price greater than zero.';
-                      }
+                      if (amount == null || !amount.isFinite || amount <= 0) return 'Enter a price greater than zero.';
                       if (amount > 999999999) return 'Price is too large.';
                       return null;
                     },
@@ -151,16 +161,12 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                   TextFormField(
                     key: const Key('product-stock'),
                     initialValue: stockText,
-                    decoration: const InputDecoration(
-                      labelText: 'Initial stock quantity',
-                    ),
+                    decoration: const InputDecoration(labelText: 'Initial stock quantity'),
                     keyboardType: TextInputType.number,
                     onChanged: (value) => stockText = value,
                     validator: (value) {
                       final quantity = parseCommaSeparatedInt(value ?? '');
-                      if (quantity == null || quantity < 0 || quantity > 999999) {
-                        return 'Enter a whole quantity from 0 to 999999.';
-                      }
+                      if (quantity == null || quantity < 0 || quantity > 999999) return 'Enter a whole quantity from 0 to 999999.';
                       return null;
                     },
                   ),
@@ -169,10 +175,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
             FilledButton(
               key: const Key('save-product'),
               onPressed: () async {
@@ -188,16 +191,10 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                 );
                 try {
                   await widget.store.saveProduct(item);
-                  if (dialogContext.mounted) {
-                    Navigator.pop(dialogContext, true);
-                  }
+                  if (dialogContext.mounted) Navigator.pop(dialogContext, true);
                 } catch (error) {
                   if (!dialogContext.mounted) return;
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(content: Text(
-                      error.toString().replaceFirst('Bad state: ', '').replaceFirst('Invalid argument(s): ', ''),
-                    )),
-                  );
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', '').replaceFirst('Invalid argument(s): ', ''))));
                 }
               },
               child: const Text('Save'),
@@ -206,15 +203,10 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
         );
       },
     );
-
     if (saved == true) {
       await _loadProducts();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(product == null ? 'Product added.' : 'Product updated.'),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(product == null ? 'Product added.' : 'Product updated.')));
     }
   }
 
@@ -224,19 +216,10 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Deactivate product?'),
-        content: Text(
-          '${product.name} will be hidden from the active catalogue. '
-          'Its record will be retained.',
-        ),
+        content: Text('${product.name} will be hidden from the active catalogue. Its record will be retained.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep active'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Deactivate'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Keep active')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Deactivate')),
         ],
       ),
     );
@@ -245,14 +228,10 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
       await widget.store.deactivateProduct(product.id!);
       await _loadProducts();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product deactivated.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product deactivated.')));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not deactivate product.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not deactivate product.')));
     }
   }
 
@@ -264,31 +243,8 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
         title: const Text('Grocery Business App'),
         actions: [
           if (widget.store is ProductRepository)
-            IconButton(
-              key: const Key('open-inventory'),
-              tooltip: 'Open inventory and movement history',
-              icon: const Icon(Icons.inventory_2_outlined),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => InventoryPage(
-                    repository: widget.store as ProductRepository,
-                  ),
-                ),
-              ),
-            ),
-          IconButton(
-            key: const Key('open-pos'),
-            tooltip: 'Open POS checkout',
-            icon: const Icon(Icons.point_of_sale),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => PosPage(
-                  products: widget.store,
-                  sales: SaleRepository(),
-                ),
-              ),
-            ),
-          ),
+            IconButton(key: const Key('open-inventory'), tooltip: 'Open inventory and movement history', icon: const Icon(Icons.inventory_2_outlined), onPressed: _openInventory),
+          IconButton(key: const Key('open-pos'), tooltip: 'Open POS checkout', icon: const Icon(Icons.point_of_sale), onPressed: _openPos),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(64),
@@ -300,13 +256,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
               decoration: InputDecoration(
                 hintText: 'Search products',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: 'Clear search',
-                        onPressed: _searchController.clear,
-                        icon: const Icon(Icons.clear),
-                      ),
+                suffixIcon: _searchController.text.isEmpty ? null : IconButton(tooltip: 'Clear search', onPressed: _searchController.clear, icon: const Icon(Icons.clear)),
                 border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surface,
@@ -318,113 +268,27 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _loadError != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_loadError!),
-                      const SizedBox(height: 8),
-                      FilledButton(
-                        onPressed: () {
-                          setState(() => _loading = true);
-                          _loadProducts();
-                        },
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
+              ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(_loadError!), const SizedBox(height: 8), FilledButton(onPressed: () { setState(() => _loading = true); _loadProducts(); }, child: const Text('Retry'))]))
               : products.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.inventory_2_outlined, size: 56),
-                            const SizedBox(height: 12),
-                            Text(
-                              _searchController.text.isEmpty
-                                  ? 'No products yet'
-                                  : 'No matching products',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _searchController.text.isEmpty
-                                  ? 'Add your first product to start building the catalogue.'
-                                  : 'Try a different product name.',
-                              textAlign: TextAlign.center,
-                            ),
-                            if (_searchController.text.isEmpty) ...[
-                              const SizedBox(height: 16),
-                              FilledButton.icon(
-                                onPressed: () => _openProductForm(),
-                                icon: const Icon(Icons.add),
-                                label: const Text('Add product'),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    )
+                  ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.inventory_2_outlined, size: 56), const SizedBox(height: 12), Text(_searchController.text.isEmpty ? 'No products yet' : 'No matching products', style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 8), Text(_searchController.text.isEmpty ? 'Add your first product to start building the catalogue.' : 'Try a different product name.', textAlign: TextAlign.center), if (_searchController.text.isEmpty) ...[const SizedBox(height: 16), FilledButton.icon(onPressed: () => _openProductForm(), icon: const Icon(Icons.add), label: const Text('Add product'))]])))
                   : RefreshIndicator(
                       onRefresh: _loadProducts,
                       child: ListView.separated(
                         padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
                         itemCount: products.length,
-                        separatorBuilder: (_, __) =>
-                            const Divider(height: 1, indent: 72),
+                        separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
                         itemBuilder: (context, index) {
                           final product = products[index];
                           return ListTile(
-                            leading: CircleAvatar(
-                              child: Text(product.name.characters.first.toUpperCase()),
-                            ),
+                            leading: CircleAvatar(child: Text(product.name.characters.first.toUpperCase())),
                             title: Text(product.name),
-                            subtitle: Text([
-                              if (product.description.trim().isNotEmpty) product.description.trim(),
-                              'Stock: ${formatIntWithCommas(product.stockQuantity)}',
-                            ].join(' · ')),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  formatMoneyCents(product.priceCents),
-                                  style: Theme.of(context).textTheme.titleSmall,
-                                ),
-                                PopupMenuButton<String>(
-                                  tooltip: 'Product actions',
-                                  onSelected: (action) {
-                                    if (action == 'edit') {
-                                      _openProductForm(product: product);
-                                    } else if (action == 'deactivate') {
-                                      _deactivate(product);
-                                    }
-                                  },
-                                  itemBuilder: (_) => const [
-                                    PopupMenuItem(
-                                      value: 'edit',
-                                      child: Text('Edit'),
-                                    ),
-                                    PopupMenuItem(
-                                      value: 'deactivate',
-                                      child: Text('Deactivate'),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                            subtitle: Text([if (product.description.trim().isNotEmpty) product.description.trim(), 'Stock: ${formatIntWithCommas(product.stockQuantity)}'].join(' · ')),
+                            trailing: Row(mainAxisSize: MainAxisSize.min, children: [Text(formatMoneyCents(product.priceCents), style: Theme.of(context).textTheme.titleSmall), PopupMenuButton<String>(tooltip: 'Product actions', onSelected: (action) { if (action == 'edit') _openProductForm(product: product); else if (action == 'deactivate') _deactivate(product); }, itemBuilder: (_) => const [PopupMenuItem(value: 'edit', child: Text('Edit')), PopupMenuItem(value: 'deactivate', child: Text('Deactivate'))])]),
                           );
                         },
                       ),
                     ),
-      floatingActionButton: FloatingActionButton.extended(
-        key: const Key('add-product-button'),
-        onPressed: () => _openProductForm(),
-        icon: const Icon(Icons.add),
-        label: const Text('Add product'),
-      ),
+      floatingActionButton: FloatingActionButton.extended(key: const Key('add-product-button'), onPressed: () => _openProductForm(), icon: const Icon(Icons.add), label: const Text('Add product')),
     );
   }
 }
