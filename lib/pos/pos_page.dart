@@ -205,6 +205,7 @@ class _PosPageState extends State<PosPage> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(
+                    key: const Key('pos-main-scroll'),
                     padding: const EdgeInsets.all(16),
                     children: [
                       Text('Products', style: Theme.of(context).textTheme.titleLarge),
