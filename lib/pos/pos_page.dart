@@ -63,31 +63,42 @@ class _PosPageState extends State<PosPage> {
       _refresh();
       return;
     }
-    final text = _paymentController.text;
-    final selection = _paymentController.selection;
-    final parsed = parseCommaSeparatedDouble(text);
-    if (parsed != null && parsed.isFinite) {
-      final normalized = parsed == parsed.truncateToDouble() ? formatIntWithCommas(parsed.toInt()) : _formatPaymentDecimal(text);
-      if (normalized != text) {
-        final cursorFromEnd = text.length - selection.baseOffset;
-        _formattingPayment = true;
-        _paymentController.value = TextEditingValue(
-          text: normalized,
-          selection: TextSelection.collapsed(offset: (normalized.length - cursorFromEnd).clamp(0, normalized.length)),
-        );
-        _formattingPayment = false;
+
+    final oldText = _paymentController.text;
+    final oldCursor = _paymentController.selection.baseOffset.clamp(0, oldText.length);
+    final digitsBeforeCursor = oldText
+        .substring(0, oldCursor)
+        .replaceAll(',', '')
+        .replaceAll('.', '')
+        .length;
+    final normalized = formatEditableGroupedDecimal(oldText);
+
+    if (normalized != null && normalized != oldText) {
+      var newCursor = 0;
+      var digitsSeen = 0;
+      while (newCursor < normalized.length && digitsSeen < digitsBeforeCursor) {
+        if (normalized[newCursor] != ',' && normalized[newCursor] != '.') {
+          digitsSeen++;
+        }
+        newCursor++;
       }
+      // Keep a decimal point the user just entered immediately before the
+      // fractional part, even when there are no fractional digits yet.
+      if (digitsSeen == digitsBeforeCursor &&
+          oldCursor > 0 &&
+          oldText.substring(0, oldCursor).contains('.') &&
+          normalized.contains('.') &&
+          newCursor < normalized.indexOf('.') + 1) {
+        newCursor = normalized.indexOf('.') + 1;
+      }
+      _formattingPayment = true;
+      _paymentController.value = TextEditingValue(
+        text: normalized,
+        selection: TextSelection.collapsed(offset: newCursor.clamp(0, normalized.length)),
+      );
+      _formattingPayment = false;
     }
     _refresh();
-  }
-
-  String _formatPaymentDecimal(String text) {
-    final clean = text.replaceAll(',', '');
-    final dot = clean.indexOf('.');
-    if (dot < 0) return formatIntWithCommas(int.parse(clean));
-    final whole = clean.substring(0, dot).isEmpty ? '0' : clean.substring(0, dot);
-    final fraction = clean.substring(dot + 1);
-    return '${formatIntWithCommas(int.parse(whole))}.$fraction';
   }
 
   void _refresh() {
