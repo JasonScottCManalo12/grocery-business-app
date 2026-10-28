@@ -24,7 +24,7 @@ class ProductRepository implements ProductStore {
     final databasePath = path.join(await getDatabasesPath(), 'grocery_business.db');
     _database = await openDatabase(
       databasePath,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await _createProducts(db);
         await _createSales(db);
@@ -35,6 +35,9 @@ class ProductRepository implements ProductStore {
         if (oldVersion < 2) await _createSales(db);
         await _createStockCapTriggers(db);
         if (oldVersion < 3) await _createStockMovements(db);
+        if (oldVersion < 4) {
+          await db.execute("ALTER TABLE products ADD COLUMN description TEXT NOT NULL DEFAULT ''");
+        }
       },
     );
     return _database!;
@@ -45,6 +48,7 @@ class ProductRepository implements ProductStore {
       CREATE TABLE products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL COLLATE NOCASE,
+        description TEXT NOT NULL DEFAULT '',
         price_cents INTEGER NOT NULL CHECK(price_cents > 0),
         stock_quantity INTEGER NOT NULL CHECK(stock_quantity >= 0 AND stock_quantity <= 999999),
         is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1)),
@@ -228,6 +232,17 @@ class ProductRepository implements ProductStore {
     }
 
     final db = await database;
+    final normalizedName = name.toLowerCase();
+    final duplicateRows = await db.query(
+      'products',
+      columns: ['id'],
+      where: 'lower(trim(name)) = ? AND (? IS NULL OR id != ?)',
+      whereArgs: [normalizedName, product.id, product.id],
+      limit: 1,
+    );
+    if (duplicateRows.isNotEmpty) {
+      throw StateError('A product with this name already exists. Edit the existing product or use a more specific name.');
+    }
     final values = product.toMap()
       ..remove('id')
       ..['name'] = name
