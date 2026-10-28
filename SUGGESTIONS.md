@@ -13,7 +13,7 @@
 - [x] CI-verify numeric formatting/parsing helpers and comma-formatted checkout: workflow #78's `flutter test` logs explicitly show passing `test/number_format_test.dart` cases for integer/PHP formatting, grouped in-progress decimals, grouped whole quantities with malformed-grouping rejection, comma-grouped money parsing, and the POS comma-formatted-payment sale regression. Workflow #84 later passed after stock-movement quantity-limit changes. User also confirmed relevant device checks.
 - [ ] Add a database-level uniqueness strategy only after auditing legacy records and validating a safe upgrade path. Never silently delete, merge, rename, or deactivate duplicates.
 - [x] Add a read-only repository audit for legacy product-name collisions using the current `lower(trim(name))` rule; integration test covers a legacy duplicate and confirms both records remain unchanged. CI passed in workflow #95 (20 tests passed; see [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485)).
-- [ ] Smoke-test the duplicate audit specifically if/when a user-facing audit path is added; workflow #95 APK installation was confirmed by the user as ALL GREEN, but no user-facing audit screen is currently documented.
+- [ ] Smoke-test the duplicate audit specifically if/when a user-facing audit path is added; no user-facing audit screen is currently documented.
 - [ ] Consider optional SKU/barcode support in a later phase.
 
 ## POS and checkout
@@ -41,6 +41,18 @@
 - [x] User-reported device verification on the current inventory build: comma-formatted stock-in quantity (e.g. `1,234`), stock-out with available-stock cap, adjustment range `0–999,999`, formatted movement history, and persistence after navigating away and returning all passed. This is user-reported device evidence, separate from CI.
 - [x] Enforce stock-movement quantity limits (stock-in capped by the remaining capacity to 999,999; stock-out capped by current stock; adjustments restricted to 0–999,999); latest workflow #84 passed. User-reported over-cap device verification is recorded in `PROJECT_STATUS.md`.
 
+## Phase 1 accounting
+
+- [x] Define the minimum Phase 1 accounting scope in `PHASE1_ACCOUNTING_SCOPE.md`.
+- [ ] Add supplier/purchase receiving records with actual acquisition cost and received quantity.
+- [ ] Implement WAC from receipt cost and quantity; do not use selling price as acquisition cost.
+- [ ] Implement inventory valuation from on-hand quantity × WAC.
+- [ ] Implement COGS and transactionally consistent sale-cost posting.
+- [ ] Implement gross-profit reporting (sales revenue − COGS).
+- [ ] Decide whether operating expenses and net-profit reporting belong in Phase 1.
+- [ ] Add accounting acceptance tests for repeated receipts, different costs/quantities, zero stock, rounding, restart persistence, completed sales, and failed checkout rollback.
+- [ ] Add backup/restore acceptance before declaring financial records release-ready.
+
 ## Release and project management
 
 - [x] Keep work isolated on `feature/pos-cart-sales`.
@@ -48,13 +60,17 @@
 - [x] User reports the six latest APK smoke checks passed before the comma-formatting changes.
 - [x] Confirm CI passes after the latest payment-formatting changes: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997).
 - [x] Confirm CI passes after stock-movement quantity-limit changes: [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), commit `1c92a66c8d043252f02d6f781a37d25926b3279d`.
-- [x] User confirmed workflow #95 APK installed successfully and reported **ALL GREEN**. This confirms the installation/checks they performed; it does not independently verify an undocumented duplicate-audit UI.
+- [x] User confirmed workflow #95 APK installed successfully and reported **ALL GREEN**.
 - [x] User confirmed all five inventory device-verification checks passed: grouped stock-in quantity, stock-out and available-stock cap, valid adjustment range, formatted movement history, and persistence after navigation. Do not merge without explicit approval.
 - [x] Keep web, desktop, and crypto modules from delaying the traditional Android MVP.
 
 ## Latest workflow evidence
 
 - Latest verified workflow passed: [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485), commit `6fa2e53bfc94890f7a156df6073c635ae8641c4d`; 20 tests passed, including the read-only legacy duplicate-name audit test, and split APKs were built and uploaded. This is CI evidence, not physical-device verification. Workflow #84 remains the earlier quantity-limit evidence.
-- Earlier payment-formatting/checkout regression workflow passed: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`. Its `flutter test` log explicitly lists passing numeric-formatting/parsing tests in `test/number_format_test.dart` and the comma-formatted-payment sale regression in `test/pos_page_test.dart`.
-- Workflow #95 artifact `grocery-business-app-apks` is approximately 24.5 MB and was reported available until 2026-11-11 07:58 UTC; download it from [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485). User subsequently confirmed the APK was installed and reported ALL GREEN.
+- Earlier payment-formatting/checkout regression workflow passed: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`.
+- Workflow #95 artifact `grocery-business-app-apks` was reported available until 2026-11-11 07:58 UTC; the user subsequently confirmed the APK was installed and reported ALL GREEN.
 - User reports all five inventory device checks passed: comma-grouped stock-in, stock-out respecting available stock, adjustment range `0–999,999`, formatted movement history, and persistence after navigation. Record these as user-reported device verification; do not imply CI independently proves device behavior.
+
+## Next implementation action
+
+**Supplier/Purchase Receiving** is the next implementation task. It must capture received quantity and actual acquisition/unit cost separately from the product selling price. WAC follows only after this foundation exists.
