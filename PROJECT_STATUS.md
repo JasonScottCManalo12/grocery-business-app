@@ -48,16 +48,16 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - [x] User reports all six checks passed on the previous newest APK: description persistence, duplicate-name validation, POS search/scrolling, cart retention during search, stock limits/movements/sale deductions, and history persistence.
 - [x] User confirmed all latest device checks, including live comma grouping beyond four digits and Complete Sale accepting comma-formatted payment.
 - [x] Workflow #95 CI passed with 20 tests and produced a split-APK artifact; this is CI/build evidence, not confirmation of physical-device behavior for the latest APK.
-- [ ] Install the workflow #95 APK and run a current device smoke test. The duplicate audit currently has repository/test coverage only; no user-facing audit screen is documented, so do not mark the audit as device-verified.
+- [x] User confirmed the workflow #95 APK was installed and reported **ALL GREEN**. This records successful installation and the user's performed checks; the legacy duplicate audit remains repository/test-covered only because no user-facing audit screen is documented.
 
 ## 4. Current recommendations
 
 1. Latest CI is green: [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485); 20 tests passed and the APK artifact was uploaded. Install that artifact and run the current device smoke test before claiming latest-build device verification.
 2. Inventory device verification: user reports all five checks passed—comma-formatted stock-in, stock-out within available stock, adjustments within `0–999,999`, formatted movement history, and persistence after navigation. Treat this as user-reported device evidence; CI status remains independently tracked.
-3. Product-name uniqueness: the read-only legacy duplicate audit and regression test passed CI in workflow #95. The audit is repository-only, with no user-facing screen documented. Determine how to inspect duplicates in existing device databases; add a database-level unique index only after a safe migration path is proven. Optional SKU/barcode support remains a later-phase consideration.
+3. Product-name uniqueness: the read-only legacy duplicate audit and regression test passed CI in workflow #95. The user confirmed the workflow #95 APK installed and reported ALL GREEN; the audit is still repository-only, with no user-facing screen documented. Determine how to inspect duplicates in existing device databases; add a database-level unique index only after a safe migration path is proven. Optional SKU/barcode support remains a later-phase consideration.
 4. Inventory costing direction: WAC is the provisional working choice documented in [`KEEP_IN_MIND.md`](https://github.com/JasonScottCManalo12/grocery-business-app/blob/feature/pos-cart-sales/KEEP_IN_MIND.md); costing implementation and tests still require separate verification.
 5. Keep `feature/pos-cart-sales` isolated; do not merge into `main` without explicit approval.
-6. Keep this dashboard and `SUGGESTIONS.md` aligned with current CI/device evidence. Both now record workflow #95 as passed; latest APK device smoke testing remains pending.
+6. Keep this dashboard and `SUGGESTIONS.md` aligned with current CI/device evidence. Both now record workflow #95 as passed; workflow #95 APK installation was confirmed by the user as ALL GREEN; no device verification is claimed for an undocumented duplicate-audit screen.
 
 ## 5. Key links
 
