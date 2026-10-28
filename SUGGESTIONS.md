@@ -10,7 +10,7 @@
 - [x] Reject new or renamed products whose names duplicate another product after trimming and case-folding.
 - [x] Format displayed prices and stock counts with thousands separators (example: `₱1,234.56`, `1,234`).
 - [x] Accept correctly grouped comma-formatted price and quantity inputs (example: `1,234.56`, `1,234`) and reject malformed grouping.
-- [ ] CI-verify the new numeric formatting/parsing helpers and retest comma-formatted inputs on device.
+- [x] CI-verify the new numeric formatting/parsing helpers and retest comma-formatted inputs on device; latest workflow #78 passed and user confirmed checks.
 - [ ] Add a database-level uniqueness strategy after reviewing legacy duplicates; do not silently delete or merge records.
 - [ ] Consider optional SKU/barcode support in a later phase.
 
@@ -26,7 +26,7 @@
 - [x] Correct live formatting for values longer than four digits and preserve incomplete decimal input while typing.
 - [x] Add regression coverage for multi-group payment input and completing checkout with comma-formatted payment.
 - [x] Refresh POS product/stock data after returning from the Inventory screen.
-- [ ] CI-verify live payment formatting, comma-formatted Complete Sale, and the inventory-to-POS refresh flow; verify the latest APK on device.
+- [x] CI-verify live payment formatting and comma-formatted Complete Sale; latest workflow #78 passed and user confirmed latest device checks. Inventory-to-POS refresh had prior green CI coverage in run #71 and user-reported device checks.
 
 ## Inventory and sales integrity
 
@@ -36,19 +36,19 @@
 - [x] Format inventory counts and movement deltas/balances with thousands separators.
 - [x] Reload inventory data after stock-in/out/adjustment operations.
 - [x] Refresh the product catalogue after returning from Inventory, so the new stock balance is displayed automatically.
-- [ ] Re-test comma-formatted stock-in/out/adjustment quantities, formatted history, and catalogue/POS automatic refresh on the newest APK.
+- [ ] Re-test comma-formatted stock-in/out/adjustment quantities and formatted history on the newest APK; automatic catalogue/POS refresh is covered by prior green CI runs #69–71.
 
 ## Release and project management
 
 - [x] Keep work isolated on `feature/pos-cart-sales`.
 - [x] Update `PROJECT_STATUS.md` and this suggestions list.
 - [x] User reports the six latest APK smoke checks passed before the comma-formatting changes.
-- [ ] Confirm CI passes after the latest payment-formatting and refresh changes and save the new run/artifact link.
-- [ ] Install and smoke-test the newest APK before requesting any merge.
+- [x] Confirm CI passes after the latest payment-formatting changes and save the run/artifact link: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), artifact available until 2026-11-11.
+- [x] User confirmed the latest APK/device checklist is all checked; do not merge without explicit approval.
 - [x] Keep web, desktop, and crypto modules from delaying the traditional Android MVP.
 
 ## Latest workflow evidence
 
-- Last known green baseline before the latest payment-formatting and refresh changes: [run 40623330210](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40623330210).
-- Latest source changes improve live payment formatting for arbitrarily long grouped values, preserve incomplete decimal input, and add regression tests for comma-formatted Complete Sale. Catalogue/POS route-return refresh remains included.
-- The baseline above predates these latest changes. Check [GitHub Actions](https://github.com/JasonScottCManalo12/grocery-business-app/actions) for the new run; do not treat the prior green run as verification of these changes.
+- Latest payment-formatting/checkout regression workflow passed: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`.
+- Artifact: `grocery-business-app-apks` (~24.5 MB), [GitHub Actions run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), available until 2026-11-11 04:54 UTC.
+- User confirmed the latest device checks are all checked. Earlier iterative runs #75–77 failed; final run #78 passed.
