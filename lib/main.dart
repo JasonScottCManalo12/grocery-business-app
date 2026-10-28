@@ -81,7 +81,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
     final query = _searchController.text.trim().toLowerCase();
     if (query.isEmpty) return _products;
     return _products
-        .where((product) => product.name.toLowerCase().contains(query))
+        .where((product) => product.name.toLowerCase().contains(query) || product.description.toLowerCase().contains(query))
         .toList(growable: false);
   }
 
@@ -91,6 +91,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
       builder: (dialogContext) {
         final formKey = GlobalKey<FormState>();
         var name = product?.name ?? '';
+        var description = product?.description ?? '';
         var priceText =
             product == null ? '' : product.price.toStringAsFixed(2);
         var stockText = product?.stockQuantity.toString() ?? '0';
@@ -113,6 +114,18 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                     validator: (value) => value == null || value.trim().isEmpty
                         ? 'Enter a product name.'
                         : null,
+                  ),
+                  TextFormField(
+                    key: const Key('product-description'),
+                    initialValue: description,
+                    minLines: 2,
+                    maxLines: 4,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Description (optional)',
+                      alignLabelWithHint: true,
+                    ),
+                    onChanged: (value) => description = value,
                   ),
                   TextFormField(
                     key: const Key('product-price'),
@@ -166,6 +179,7 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                 final item = Product(
                   id: product?.id,
                   name: name.trim(),
+                  description: description.trim(),
                   priceCents: (amount * 100).round(),
                   stockQuantity: int.parse(stockText.trim()),
                   isActive: product?.isActive ?? true,
@@ -178,7 +192,9 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                 } catch (_) {
                   if (!dialogContext.mounted) return;
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    const SnackBar(content: Text('Could not save product.')),
+                    SnackBar(content: Text(
+                      _.toString().replaceFirst('Bad state: ', '').replaceFirst('Invalid argument(s): ', ''),
+                    )),
                   );
                 }
               },
@@ -351,7 +367,10 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
                               child: Text(product.name.characters.first.toUpperCase()),
                             ),
                             title: Text(product.name),
-                            subtitle: Text('Stock: ${product.stockQuantity}'),
+                            subtitle: Text([
+                              if (product.description.trim().isNotEmpty) product.description.trim(),
+                              'Stock: ${product.stockQuantity}',
+                            ].join(' · ')),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
