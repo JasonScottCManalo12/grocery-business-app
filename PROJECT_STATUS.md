@@ -29,7 +29,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 
 ### Latest workflow evidence
 
-- **Latest CI passed:** [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`. Flutter tests and split release APK build completed successfully; artifact uploaded.
+- **Latest CI passed:** [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), commit `1c92a66c8d043252f02d6f781a37d25926b3279d` (`Enforce stock movement quantity limits`). Earlier payment-formatting/checkout CI also passed in [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997).
 - **APK artifact:** `grocery-business-app-apks`, 24,516,655 bytes (~24.5 MB), available until 2026-11-11 04:54 UTC.
 - Confirmation-flow baseline passed: [run 40469645532](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40469645532).
 - Stock-ledger and SQLite integration-test baseline: [run 40474176723](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40474176723).
@@ -49,11 +49,12 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 
 ## 4. Current recommendations
 
-1. Confirm CI passes and produces APK artifacts for the newest comma-formatting changes.
-2. Install the newest APK and verify description create/edit/persistence, case-insensitive duplicate rejection, POS name/description search, cart retention during search, stock caps, sale atomicity, and history persistence.
-3. Inventory UI entry point and stock movement screen have now been added; verify stock-in/out/adjustment forms and movement history in CI and on-device.
-4. Keep `feature/pos-cart-sales` isolated; do not merge into `main` automatically.
-5. Keep the Suggestions List current and update evidence after CI/device checks. The new `number_format_test.dart` covers grouped integer/money formatting, valid comma parsing, and malformed grouping rejection.
+1. Latest CI is green: [run #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925), including the stock-movement quantity-limit change. Verify the run's artifact before treating it as the newest installable APK.
+2. Keep the inventory device test pending: re-test comma-formatted stock-in/out/adjustment quantities and formatted movement history on the newest APK. Do not mark this complete from CI alone.
+3. Preserve the open product-catalogue items: review legacy duplicates before a database-level uniqueness strategy; optional SKU/barcode support remains a later-phase consideration.
+4. Inventory costing direction: WAC is the provisional working choice documented in [`KEEP_IN_MIND.md`](https://github.com/JasonScottCManalo12/grocery-business-app/blob/feature/pos-cart-sales/KEEP_IN_MIND.md); costing implementation and tests still require separate verification.
+5. Keep `feature/pos-cart-sales` isolated; do not merge into `main` without explicit approval.
+6. Keep this dashboard and `SUGGESTIONS.md` aligned with current CI/device evidence.
 
 ## 5. Key links
 
@@ -69,9 +70,9 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 For each milestone: implement the agreed scope, run tests/build, inspect actual results, update this dashboard with evidence, and keep unverified behavior marked as pending. Do not merge a feature branch without explicit approval.
 
 
-Latest CI follow-up: earlier runs #75–77 failed during iterative changes; run #78 is green after placing the comma-formatted checkout regression test inside the test suite. User has confirmed the latest device checks are all checked.
+Latest CI follow-up: runs #75–77 failed during iterative changes; run #78 passed after the comma-formatted checkout regression test was placed inside the test suite. Newer run #84 passed after stock-movement quantity-limit changes. User has confirmed device checks on the previous newest APK; the specific comma-formatted inventory movement/history test remains pending on the newest APK.
 
 
 ## 7. Numeric formatting recommendation
 
-Requested by user: use thousands separators for displayed numeric values, including PHP prices and amounts (`₱1,234.56`) and quantities (`1,234`). Inputs should accept correctly grouped commas and reject malformed grouping. Implementation is on the feature branch; latest CI passed in run #78 and the user confirmed device checks are complete.
+Requested by user: use thousands separators for displayed numeric values, including PHP prices and amounts (`₱1,234.56`) and quantities (`1,234`). Inputs should accept correctly grouped commas and reject malformed grouping. Implementation is on the feature branch; payment-formatting/checkout CI passed in run #78. The later run #84 passed after stock-movement quantity-limit changes. User-confirmed payment-formatting checks are complete; formatted stock-in/out/adjustment and history still need newest-APK verification.
