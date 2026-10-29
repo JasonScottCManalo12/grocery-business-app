@@ -45,12 +45,13 @@
 
 - [x] Define the minimum Phase 1 accounting scope in `PHASE1_ACCOUNTING_SCOPE.md`.
 - [x] Implement supplier/purchase receiving form and repository: capture supplier name, product, received quantity, and actual acquisition cost separately from selling price; record receipt header/items and stock movement in one transaction. Workflow #107 passed and user confirmed all purchase-receiving device smoke-test items checked.
-- [ ] Implement WAC from receipt cost and quantity; do not use selling price as acquisition cost.
-- [ ] Implement inventory valuation from on-hand quantity × WAC.
-- [ ] Implement COGS and transactionally consistent sale-cost posting.
-- [ ] Implement gross-profit reporting (sales revenue − COGS).
+- [x] WAC calculation/persistence code exists and is covered by integration tests, including blended WAC across receipts. Device acceptance has NOT passed; do not mark the accounting feature accepted until user verifies the actual APK.
+- [x] Fix legacy opening-stock cost handling: a new receipt must not assign its unit cost to older stock with unknown cost. Unknown WAC stays unknown until an explicit opening-stock valuation is recorded.
+- [x] Add a read-only inventory valuation summary that shows quantity × known WAC and explicitly flags unknown-cost stock. Device acceptance pending.
+- [x] COGS posting/model code exists and is transactionally coupled to checkout; integration tests cover known WAC, blended WAC, and failed-checkout rollback. Device acceptance has NOT passed.
+- [x] Add a read-only lifetime gross-profit summary for sales with known COGS; unknown-cost sales are explicitly excluded and counted. Device acceptance pending; date-filtered reporting remains future work.
 - [ ] Decide whether operating expenses and net-profit reporting belong in Phase 1.
-- [ ] Add accounting acceptance tests for repeated receipts, different costs/quantities, zero stock, rounding, restart persistence, completed sales, and failed checkout rollback.
+- [x] Add integration tests for multiple receipts/different costs, blended WAC COGS, unknown opening-stock cost, completed sale, and failed-checkout rollback. [ ] Add explicit rounding-boundary and real on-disk restart/migration tests. [ ] Device acceptance remains pending.
 - [ ] Add backup/restore acceptance before declaring financial records release-ready.
 
 ## Release and project management
@@ -74,4 +75,4 @@
 
 ## Next implementation action
 
-**Next: verify the WAC/COGS APK on-device** once workflow #119 finishes. Then implement inventory valuation and gross-profit reporting/reconciliation. Tests cover multiple receipts at different costs, checkout COGS, gross-profit arithmetic, and rollback; more rounding, restart/migration, and edge-case tests remain advisable.
+**Next: wait for the latest CI run and verify the exact APK on-device.** WAC/COGS device acceptance has not passed per the user. Inventory valuation and gross-profit lifetime summary UI now exist on the feature branch but also need smoke testing. Date-filtered reports, rounding-boundary tests, on-disk restart/migration tests, and backup/restore acceptance remain open.
