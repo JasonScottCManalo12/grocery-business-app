@@ -41,12 +41,17 @@ class PurchaseRepository {
       final after = before + quantity;
       if (after > 999999) throw StateError('Stock quantity cannot exceed 999999.');
       final oldAverageCost = product['average_cost_cents'] as int?;
-      // Legacy stock may have no acquisition-cost history. Until an opening
-      // valuation workflow exists, the first receipt initializes its WAC at
-      // the receipt cost; this is a provisional valuation for pre-existing units.
-      final averageCost = before == 0 || oldAverageCost == null
-          ? unitCostCents
-          : ((before * oldAverageCost + quantity * unitCostCents + (after ~/ 2)) ~/ after);
+      // If existing units have unknown acquisition cost, do not assign the
+      // new receipt's cost to those units. Keep WAC unknown until the owner
+      // explicitly values opening stock. A known WAC can be weighted normally.
+      final int? averageCost;
+      if (before == 0) {
+        averageCost = unitCostCents;
+      } else if (oldAverageCost == null) {
+        averageCost = null;
+      } else {
+        averageCost = ((before * oldAverageCost + quantity * unitCostCents + (after ~/ 2)) ~/ after);
+      }
       final now = DateTime.now().toIso8601String();
       final receiptId = await txn.insert('purchase_receipts', {'supplier_name': supplier, 'total_cost_cents': lineTotal, 'created_at': now});
       await txn.insert('purchase_receipt_items', {
