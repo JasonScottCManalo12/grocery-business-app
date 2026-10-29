@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'accounting/accounting_page.dart';
 import 'data/product_repository.dart';
 import 'data/sales_repository.dart';
 import 'models/product.dart';
@@ -242,8 +243,10 @@ class _ProductCataloguePageState extends State<ProductCataloguePage> {
       appBar: AppBar(
         title: const Text('Grocery Business App'),
         actions: [
-          if (widget.store is ProductRepository)
+          if (widget.store is ProductRepository) ...[
             IconButton(key: const Key('open-inventory'), tooltip: 'Open inventory and movement history', icon: const Icon(Icons.inventory_2_outlined), onPressed: _openInventory),
+            IconButton(key: const Key('open-accounting'), tooltip: 'Inventory valuation and gross profit', icon: const Icon(Icons.analytics_outlined), onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => AccountingPage(repository: widget.store as ProductRepository)))),
+          ],
           IconButton(key: const Key('open-pos'), tooltip: 'Open POS checkout', icon: const Icon(Icons.point_of_sale), onPressed: _openPos),
         ],
         bottom: PreferredSize(
