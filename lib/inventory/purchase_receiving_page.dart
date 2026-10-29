@@ -100,7 +100,7 @@ class _PurchaseReceivingPageState extends State<PurchaseReceivingPage> {
             return null;
           }),
         const SizedBox(height: 8),
-        const Text('This does not change the selling price. WAC calculation is a later milestone.'),
+        const Text('This does not change the selling price. If existing stock has unknown acquisition cost, the app will keep its WAC unknown rather than guessing.'),
         const SizedBox(height: 20),
         FilledButton(key: const Key('save-purchase-receipt'), onPressed: _saving ? null : _save,
           child: Text(_saving ? 'Saving…' : 'Record purchase receipt')),
