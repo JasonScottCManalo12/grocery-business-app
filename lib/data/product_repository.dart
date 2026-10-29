@@ -24,12 +24,13 @@ class ProductRepository implements ProductStore {
     final databasePath = path.join(await getDatabasesPath(), 'grocery_business.db');
     _database = await openDatabase(
       databasePath,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await _createProducts(db);
         await _createSales(db);
         await _createStockCapTriggers(db);
         await _createStockMovements(db);
+        await _createCostingColumns(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createSales(db);
@@ -38,9 +39,17 @@ class ProductRepository implements ProductStore {
         if (oldVersion < 4) {
           await db.execute("ALTER TABLE products ADD COLUMN description TEXT NOT NULL DEFAULT ''");
         }
+        if (oldVersion < 5) await _createCostingColumns(db);
       },
     );
     return _database!;
+  }
+
+  Future<void> _createCostingColumns(DatabaseExecutor db) async {
+    await db.execute('ALTER TABLE products ADD COLUMN average_cost_cents INTEGER');
+    await db.execute('ALTER TABLE sale_items ADD COLUMN unit_cost_cents INTEGER');
+    await db.execute('ALTER TABLE sale_items ADD COLUMN line_cost_cents INTEGER');
+    await db.execute('ALTER TABLE sales ADD COLUMN total_cogs_cents INTEGER');
   }
 
   Future<void> _createProducts(DatabaseExecutor db) async {
@@ -49,6 +58,7 @@ class ProductRepository implements ProductStore {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL COLLATE NOCASE,
         description TEXT NOT NULL DEFAULT '',
+        average_cost_cents INTEGER,
         price_cents INTEGER NOT NULL CHECK(price_cents > 0),
         stock_quantity INTEGER NOT NULL CHECK(stock_quantity >= 0 AND stock_quantity <= 999999),
         is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1)),
@@ -65,7 +75,8 @@ class ProductRepository implements ProductStore {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at TEXT NOT NULL,
         total_cents INTEGER NOT NULL CHECK(total_cents >= 0),
-        payment_cents INTEGER NOT NULL CHECK(payment_cents >= total_cents)
+        payment_cents INTEGER NOT NULL CHECK(payment_cents >= total_cents),
+        total_cogs_cents INTEGER
       )
     ''');
     await db.execute('''
@@ -76,7 +87,9 @@ class ProductRepository implements ProductStore {
         product_name TEXT NOT NULL,
         quantity INTEGER NOT NULL CHECK(quantity > 0),
         unit_price_cents INTEGER NOT NULL CHECK(unit_price_cents > 0),
-        line_total_cents INTEGER NOT NULL CHECK(line_total_cents > 0)
+        line_total_cents INTEGER NOT NULL CHECK(line_total_cents > 0),
+        unit_cost_cents INTEGER,
+        line_cost_cents INTEGER
       )
     ''');
     await db.execute('CREATE INDEX sale_items_sale_id_index ON sale_items(sale_id)');
