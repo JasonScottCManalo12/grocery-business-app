@@ -44,7 +44,7 @@
 ## Phase 1 accounting
 
 - [x] Define the minimum Phase 1 accounting scope in `PHASE1_ACCOUNTING_SCOPE.md`.
-- [ ] Add supplier/purchase receiving records with actual acquisition cost and received quantity.
+- [x] Implement supplier/purchase receiving form and repository: capture supplier name, product, received quantity, and actual acquisition cost separately from selling price; record receipt header/items and stock movement in one transaction. CI and physical-device acceptance remain pending.
 - [ ] Implement WAC from receipt cost and quantity; do not use selling price as acquisition cost.
 - [ ] Implement inventory valuation from on-hand quantity × WAC.
 - [ ] Implement COGS and transactionally consistent sale-cost posting.
@@ -66,11 +66,12 @@
 
 ## Latest workflow evidence
 
-- Latest verified workflow passed: [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485), commit `6fa2e53bfc94890f7a156df6073c635ae8641c4d`; 20 tests passed, including the read-only legacy duplicate-name audit test, and split APKs were built and uploaded. This is CI evidence, not physical-device verification. Workflow #84 remains the earlier quantity-limit evidence.
+- Previous verified baseline: [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485), commit `6fa2e53bfc94890f7a156df6073c635ae8641c4d`; 20 tests passed and split APKs were built and uploaded. This is CI evidence, not physical-device verification.
+- Purchase receiving is on branch `feature/supplier-purchase-receiving`; [workflow #107](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40867505101) is pending. New tests cover receipt cost capture, stock increase, preserved selling price, and rollback when stock capacity would be exceeded.
 - Earlier payment-formatting/checkout regression workflow passed: [run #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997), commit `3f3505ec1d68ccd357db4a836e46b63f4a760584`.
 - Workflow #95 artifact `grocery-business-app-apks` was reported available until 2026-11-11 07:58 UTC; the user subsequently confirmed the APK was installed and reported ALL GREEN.
 - User reports all five inventory device checks passed: comma-grouped stock-in, stock-out respecting available stock, adjustment range `0–999,999`, formatted movement history, and persistence after navigation. Record these as user-reported device verification; do not imply CI independently proves device behavior.
 
 ## Next implementation action
 
-**Supplier/Purchase Receiving** is the next implementation task. It must capture received quantity and actual acquisition/unit cost separately from the product selling price. WAC follows only after this foundation exists.
+**Next: verify Supplier/Purchase Receiving** in workflow #107 and on-device smoke tests. The feature records received quantity and actual acquisition/unit cost separately from selling price. Then implement WAC with tests for repeated receipts, different costs/quantities, zero stock, rounding, restart persistence, completed sales, and failed-checkout rollback.
