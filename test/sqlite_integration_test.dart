@@ -13,6 +13,7 @@ Future<Database> _openDatabase() async {
       name TEXT NOT NULL COLLATE NOCASE,
       description TEXT NOT NULL DEFAULT '',
       price_cents INTEGER NOT NULL CHECK(price_cents > 0),
+      average_cost_cents INTEGER,
       stock_quantity INTEGER NOT NULL CHECK(stock_quantity >= 0 AND stock_quantity <= 999999),
       is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1)),
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -24,7 +25,8 @@ Future<Database> _openDatabase() async {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       created_at TEXT NOT NULL,
       total_cents INTEGER NOT NULL CHECK(total_cents >= 0),
-      payment_cents INTEGER NOT NULL CHECK(payment_cents >= total_cents)
+      payment_cents INTEGER NOT NULL CHECK(payment_cents >= total_cents),
+      total_cogs_cents INTEGER
     )
   ''');
   await db.execute('''
@@ -35,7 +37,9 @@ Future<Database> _openDatabase() async {
       product_name TEXT NOT NULL,
       quantity INTEGER NOT NULL CHECK(quantity > 0),
       unit_price_cents INTEGER NOT NULL CHECK(unit_price_cents > 0),
-      line_total_cents INTEGER NOT NULL CHECK(line_total_cents > 0)
+      line_total_cents INTEGER NOT NULL CHECK(line_total_cents > 0),
+      unit_cost_cents INTEGER,
+      line_cost_cents INTEGER
     )
   ''');
   await db.execute('''
@@ -282,6 +286,62 @@ void main() {
     expect(await purchases.getReceipts(), isEmpty);
     expect(await purchases.getReceiptItems(1), isEmpty);
     expect(await products.getStockMovements(productId: id), isEmpty);
+  });
+
+  test('WAC weights multiple receipts by quantity and persists the result', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Cooking Oil', priceCents: 5000, stockQuantity: 0,
+    ));
+    final purchases = PurchaseRepository(products: products);
+    await purchases.receivePurchase(supplierName: 'Supplier A', productId: id, quantity: 10, unitCostCents: 2000);
+    await purchases.receivePurchase(supplierName: 'Supplier B', productId: id, quantity: 10, unitCostCents: 2500);
+    final row = (await db.query('products', columns: ['stock_quantity', 'average_cost_cents'], where: 'id = ?', whereArgs: [id])).single;
+    expect(row['stock_quantity'], 20);
+    expect(row['average_cost_cents'], 2250);
+  });
+
+  test('checkout posts WAC-based COGS atomically and exposes gross profit', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Sugar with cost', priceCents: 5000, stockQuantity: 0,
+    ));
+    final purchases = PurchaseRepository(products: products);
+    await purchases.receivePurchase(supplierName: 'Supplier', productId: id, quantity: 10, unitCostCents: 2000);
+    final receipt = await sales.completeSale(quantities: {id: 3}, paymentCents: 15000);
+    expect(receipt.totalCogsCents, 6000);
+    expect(receipt.grossProfitCents, 9000);
+    final saleRow = (await db.query('sales')).single;
+    expect(saleRow['total_cogs_cents'], 6000);
+    final item = (await db.query('sale_items')).single;
+    expect(item['unit_cost_cents'], 2000);
+    expect(item['line_cost_cents'], 6000);
+    expect((await products.getProducts()).single.stockQuantity, 7);
+  });
+
+  test('failed checkout leaves COGS, sales, and inventory unchanged', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Salt with cost', priceCents: 500, stockQuantity: 0,
+    ));
+    await PurchaseRepository(products: products).receivePurchase(
+      supplierName: 'Supplier', productId: id, quantity: 2, unitCostCents: 125,
+    );
+    await expectLater(
+      sales.completeSale(quantities: {id: 3}, paymentCents: 1500),
+      throwsStateError,
+    );
+    expect(await db.query('sales'), isEmpty);
+    expect(await db.query('sale_items'), isEmpty);
+    expect((await products.getProducts()).single.stockQuantity, 2);
+    expect((await db.query('products', columns: ['average_cost_cents'])).single['average_cost_cents'], 125);
+  });
+
+  test('sales with unknown legacy acquisition cost do not invent COGS', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Legacy product', priceCents: 500, stockQuantity: 3,
+    ));
+    final receipt = await sales.completeSale(quantities: {id: 1}, paymentCents: 500);
+    expect(receipt.totalCogsCents, isNull);
+    expect(receipt.grossProfitCents, isNull);
+    expect((await db.query('sales')).single['total_cogs_cents'], isNull);
   });
 
 }
