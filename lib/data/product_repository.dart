@@ -58,7 +58,6 @@ class ProductRepository implements ProductStore {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL COLLATE NOCASE,
         description TEXT NOT NULL DEFAULT '',
-        average_cost_cents INTEGER,
         price_cents INTEGER NOT NULL CHECK(price_cents > 0),
         stock_quantity INTEGER NOT NULL CHECK(stock_quantity >= 0 AND stock_quantity <= 999999),
         is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1)),
@@ -75,8 +74,7 @@ class ProductRepository implements ProductStore {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at TEXT NOT NULL,
         total_cents INTEGER NOT NULL CHECK(total_cents >= 0),
-        payment_cents INTEGER NOT NULL CHECK(payment_cents >= total_cents),
-        total_cogs_cents INTEGER
+        payment_cents INTEGER NOT NULL CHECK(payment_cents >= total_cents)
       )
     ''');
     await db.execute('''
@@ -87,9 +85,7 @@ class ProductRepository implements ProductStore {
         product_name TEXT NOT NULL,
         quantity INTEGER NOT NULL CHECK(quantity > 0),
         unit_price_cents INTEGER NOT NULL CHECK(unit_price_cents > 0),
-        line_total_cents INTEGER NOT NULL CHECK(line_total_cents > 0),
-        unit_cost_cents INTEGER,
-        line_cost_cents INTEGER
+        line_total_cents INTEGER NOT NULL CHECK(line_total_cents > 0)
       )
     ''');
     await db.execute('CREATE INDEX sale_items_sale_id_index ON sale_items(sale_id)');
