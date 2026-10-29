@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../data/product_repository.dart';
 import '../models/product.dart';
 import '../models/stock_movement.dart';
+import 'purchase_receiving_page.dart';
 import '../utils/number_format.dart';
 
 class _GroupedIntegerInputFormatter extends TextInputFormatter {
@@ -405,6 +406,19 @@ class _InventoryPageState extends State<InventoryPage> {
                                 onPressed: _adjustStock,
                                 icon: const Icon(Icons.tune),
                                 label: const Text('Adjust'),
+                              ),
+                              FilledButton.icon(
+                                key: const Key('inventory-receive-purchase'),
+                                onPressed: () async {
+                                  final saved = await Navigator.of(context).push<bool>(
+                                    MaterialPageRoute<bool>(
+                                      builder: (_) => PurchaseReceivingPage(repository: widget.repository),
+                                    ),
+                                  );
+                                  if (saved == true) await _load();
+                                },
+                                icon: const Icon(Icons.local_shipping_outlined),
+                                label: const Text('Receive purchase'),
                               ),
                             ],
                           ),
