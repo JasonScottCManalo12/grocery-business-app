@@ -27,9 +27,9 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 | Sale atomicity | Implemented and integration-tested | Sale header, line items, stock deduction, and sale movement are written inside one SQLite transaction; failure rollback is tested. |
 | Phase 1 accounting scope | Defined | `PHASE1_ACCOUNTING_SCOPE.md` defines sales totals, acquisition cost, WAC, inventory valuation, COGS, and gross profit. |
 | Supplier / purchase receiving | Implemented; CI and user-reported device smoke tests PASS | Workflow #107 passed tests and built split APKs. User confirmed all purchase-receiving smoke-test items checked on the device. Receipt header/items and stock movement are written atomically; selling price remains unchanged. |
-| WAC / COGS calculation | Implemented; automated tests pass; APK/device verification pending | Database v5 stores per-product WAC, sale-item unit cost/line COGS, and sale total COGS. Purchase receipts update WAC; checkout snapshots WAC and records COGS atomically. Unknown legacy cost remains null rather than inventing COGS. |
-| Inventory valuation / gross-profit reporting UI | Pending | Sale model exposes gross profit when COGS is known; valuation and reporting screens/summary queries are not yet implemented. |
-| Acquisition cost / WAC / COGS | Not implemented/verified | Current evidence covers selling price, quantity, stock movements, and sales, but not verified acquisition-cost or WAC/COGS records. |
+| WAC / COGS calculation | Code and integration tests exist; user-reported device acceptance FAIL | Purchase receipts update WAC when cost history is known; checkout snapshots unit cost and COGS atomically. User explicitly reports none of the WAC/COGS device tests passed. Do not mark accepted until root cause is reproduced and a corrected APK passes. Legacy opening-stock handling was corrected to keep WAC unknown rather than assigning a new receipt cost to older units. |
+| Inventory valuation / gross-profit reporting UI | Implemented on feature branch; CI/device verification pending | New read-only accounting screen shows known-WAC inventory value and lifetime gross profit only for sales with known COGS. Unknown-cost stock/sales are explicitly flagged and excluded. Not device-accepted. |
+
 | Web / desktop | Not started | After Android MVP. |
 | Crypto modules | Deferred | Must not delay traditional grocery operations. |
 
@@ -37,7 +37,7 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 
 - **Previous verified baseline:** [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485), commit `6fa2e53bfc94890f7a156df6073c635ae8641c4d`; 20 tests passed, and split APKs were built and uploaded.
 - **Purchase receiving CI and device acceptance:** [run #107](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40867505101), branch `feature/supplier-purchase-receiving`; workflow succeeded, integration tests passed, split APK artifact uploaded, and user confirmed all purchase-receiving smoke-test items checked on device.
-- **WAC/COGS implementation:** [run #119](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40874663733), commit `9537441d24e3933fdbafffbe554f0fd5a92936a0`; all automated tests passed, APK build still running at the time of this update. Earlier runs #114–#118 failed during development and were corrected; use #119 as the latest verification run.
+- **WAC/COGS implementation:** automated tests were added in commits after run #119, but user explicitly reports WAC/COGS device tests did not pass. See the latest feature-branch runs and test results before claiming CI acceptance. Root-cause investigation and device verification remain open.
 - **Latest APK artifact:** `grocery-business-app-apks`, approximately 24.5 MB; the user confirmed the APK was installed and reported **ALL GREEN**.
 - Earlier payment-formatting/checkout evidence: [workflow #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997).
 - Earlier stock-movement quantity-limit evidence: [workflow #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925).
@@ -60,8 +60,9 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 ## 4. Current recommendations
 
 1. **Purchase receiving is implemented and verified** on `feature/supplier-purchase-receiving`: workflow #107 passed and user-reported device smoke tests all passed.
-2. **WAC and checkout COGS are implemented; automated tests passed in run #119.** Finish APK build/artifact verification and device smoke tests before marking this milestone fully accepted.
-3. Next implement inventory valuation and gross-profit reporting. Legacy stock without known acquisition cost is deliberately kept unknown; do not present zero or fabricated COGS as actual cost.
+2. **WAC/COGS device acceptance has failed** per user report. Reproduce the failure and fix it; never infer acceptance from a green documentation workflow.
+3. Inventory valuation and gross-profit summary UI now exist on this feature branch but remain unverified. Legacy stock without known acquisition cost is deliberately kept unknown; do not present zero or fabricated COGS as actual cost.
+4. Run tests/build and verify the exact APK on-device before marking accounting accepted.
 2. **Implement WAC after receiving exists.** Do not use selling price as acquisition cost. Test repeated receipts, different costs/quantities, zero stock, rounding, restart persistence, and sale/rollback behavior.
 3. **Implement inventory valuation, COGS, and gross profit** after WAC is reliable.
 4. **Decide expense/net-profit scope** only if explicitly accepted for Phase 1.
