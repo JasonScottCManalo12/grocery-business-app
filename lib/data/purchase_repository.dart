@@ -34,19 +34,26 @@ class PurchaseRepository {
     final db = await _products.database;
     await _ensureTables(db);
     return db.transaction((txn) async {
-      final rows = await txn.query('products', columns: ['id', 'name', 'stock_quantity', 'is_active'], where: 'id = ?', whereArgs: [productId], limit: 1);
+      final rows = await txn.query('products', columns: ['id', 'name', 'stock_quantity', 'is_active', 'average_cost_cents'], where: 'id = ?', whereArgs: [productId], limit: 1);
       if (rows.isEmpty || rows.single['is_active'] != 1) throw StateError('An active product must be selected.');
       final product = rows.single;
       final before = product['stock_quantity'] as int;
       final after = before + quantity;
       if (after > 999999) throw StateError('Stock quantity cannot exceed 999999.');
+      final oldAverageCost = product['average_cost_cents'] as int?;
+      // Legacy stock may have no acquisition-cost history. Until an opening
+      // valuation workflow exists, the first receipt initializes its WAC at
+      // the receipt cost; this is a provisional valuation for pre-existing units.
+      final averageCost = before == 0 || oldAverageCost == null
+          ? unitCostCents
+          : ((before * oldAverageCost + quantity * unitCostCents + (after ~/ 2)) ~/ after);
       final now = DateTime.now().toIso8601String();
       final receiptId = await txn.insert('purchase_receipts', {'supplier_name': supplier, 'total_cost_cents': lineTotal, 'created_at': now});
       await txn.insert('purchase_receipt_items', {
         'receipt_id': receiptId, 'product_id': productId, 'product_name': product['name'],
         'quantity': quantity, 'unit_cost_cents': unitCostCents, 'line_total_cents': lineTotal,
       });
-      final changed = await txn.rawUpdate('UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ? AND stock_quantity = ?', [after, now, productId, before]);
+      final changed = await txn.rawUpdate('UPDATE products SET stock_quantity = ?, average_cost_cents = ?, updated_at = ? WHERE id = ? AND stock_quantity = ?', [after, averageCost, now, productId, before]);
       if (changed != 1) throw StateError('Stock changed while recording the purchase.');
       await txn.insert('stock_movements', {
         'product_id': productId, 'product_name': product['name'], 'movement_type': 'stock_in',
