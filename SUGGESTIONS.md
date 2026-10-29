@@ -74,4 +74,4 @@
 
 ## Next implementation action
 
-**Next: implement WAC** using the verified purchase-receipt acquisition costs. Test repeated receipts, different costs/quantities, zero stock, rounding, restart persistence, completed sales, and failed-checkout rollback.
+**Next: verify the WAC/COGS APK on-device** once workflow #119 finishes. Then implement inventory valuation and gross-profit reporting/reconciliation. Tests cover multiple receipts at different costs, checkout COGS, gross-profit arithmetic, and rollback; more rounding, restart/migration, and edge-case tests remain advisable.
