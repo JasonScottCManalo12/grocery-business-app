@@ -344,4 +344,44 @@ void main() {
     expect((await db.query('sales')).single['total_cogs_cents'], isNull);
   });
 
+  test('receipt does not invent WAC for existing stock with unknown cost', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Legacy stock', priceCents: 5000, stockQuantity: 5,
+    ));
+    await PurchaseRepository(products: products).receivePurchase(
+      supplierName: 'New Supplier',
+      productId: id,
+      quantity: 10,
+      unitCostCents: 2000,
+    );
+    final row = (await db.query(
+      'products',
+      columns: ['stock_quantity', 'average_cost_cents'],
+      where: 'id = ?',
+      whereArgs: [id],
+    )).single;
+    expect(row['stock_quantity'], 15);
+    expect(row['average_cost_cents'], isNull);
+  });
+
+  test('COGS uses blended WAC after multiple receipts', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Blended WAC product', priceCents: 5000, stockQuantity: 0,
+    ));
+    final purchases = PurchaseRepository(products: products);
+    await purchases.receivePurchase(
+      supplierName: 'Supplier A', productId: id, quantity: 10, unitCostCents: 2000,
+    );
+    await purchases.receivePurchase(
+      supplierName: 'Supplier B', productId: id, quantity: 10, unitCostCents: 2500,
+    );
+    final receipt = await sales.completeSale(quantities: {id: 3}, paymentCents: 15000);
+    expect(receipt.lines.single.unitCostCents, 2250);
+    expect(receipt.totalCogsCents, 6750);
+    expect(receipt.grossProfitCents, 8250);
+    final saved = (await sales.getSales()).single;
+    expect(saved.totalCogsCents, 6750);
+    expect(saved.lines.single.lineCostCents, 6750);
+  });
+
 }
