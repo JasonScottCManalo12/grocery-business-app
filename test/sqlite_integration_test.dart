@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:grocery_business_app/data/product_repository.dart';
 import 'package:grocery_business_app/data/sales_repository.dart';
+import 'package:grocery_business_app/data/purchase_repository.dart';
 import 'package:grocery_business_app/models/product.dart';
 
 Future<Database> _openDatabase() async {
@@ -228,4 +229,59 @@ void main() {
     expect(await db.query('sale_items'), isEmpty);
     expect(await products.getStockMovements(productId: id), isEmpty);
   });
+  test('purchase receiving stores acquisition cost and atomically increases stock', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Rice', priceCents: 5000, stockQuantity: 10,
+    ));
+    final purchases = PurchaseRepository(products: products);
+    final receiptId = await purchases.receivePurchase(
+      supplierName: 'ABC Wholesale',
+      productId: id,
+      quantity: 5,
+      unitCostCents: 2000,
+    );
+
+    final savedProduct = (await products.getProducts()).single;
+    expect(savedProduct.stockQuantity, 15);
+    expect(savedProduct.priceCents, 5000, reason: 'Acquisition cost must not overwrite selling price.');
+
+    final receipts = await purchases.getReceipts();
+    expect(receipts, hasLength(1));
+    expect(receipts.single['id'], receiptId);
+    expect(receipts.single['supplier_name'], 'ABC Wholesale');
+    expect(receipts.single['total_cost_cents'], 10000);
+
+    final items = await purchases.getReceiptItems(receiptId);
+    expect(items, hasLength(1));
+    expect(items.single['quantity'], 5);
+    expect(items.single['unit_cost_cents'], 2000);
+    expect(items.single['line_total_cents'], 10000);
+
+    final movements = await products.getStockMovements(productId: id);
+    expect(movements, hasLength(1));
+    expect(movements.single.quantityDelta, 5);
+    expect(movements.single.quantityAfter, 15);
+    expect(movements.single.reason, contains('ABC Wholesale'));
+  });
+
+  test('purchase receiving rejects over-cap stock without partial receipt writes', () async {
+    final id = await products.saveProduct(const Product(
+      name: 'Beans', priceCents: 1000, stockQuantity: 999998,
+    ));
+    final purchases = PurchaseRepository(products: products);
+    await expectLater(
+      purchases.receivePurchase(
+        supplierName: 'Test Supplier',
+        productId: id,
+        quantity: 2,
+        unitCostCents: 125,
+      ),
+      throwsStateError,
+    );
+    expect((await products.getProducts()).single.stockQuantity, 999998);
+    expect(await purchases.getReceipts(), isEmpty);
+    expect(await purchases.getReceiptItems(1), isEmpty);
+    expect(await products.getStockMovements(productId: id), isEmpty);
+  });
+
 }
