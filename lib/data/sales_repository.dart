@@ -55,6 +55,7 @@ class SaleRepository implements SaleStore {
           productName: product.name,
           quantity: entry.value,
           unitPriceCents: product.priceCents,
+          unitCostCents: row['average_cost_cents'] as int?,
         );
         lines.add(line);
         totalCents += line.lineTotalCents;
