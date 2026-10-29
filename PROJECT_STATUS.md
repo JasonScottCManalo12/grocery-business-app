@@ -25,14 +25,17 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 | Stock quantity cap | Implemented on feature branch | UI/repository validation and SQLite constraints/triggers target 0–999,999; user reports the over-cap device test passed. |
 | Stock movement ledger | Implemented; CI/device evidence green | Stock-in/out, adjustments, sale entries, movement history, formatted quantities, and persistence. |
 | Sale atomicity | Implemented and integration-tested | Sale header, line items, stock deduction, and sale movement are written inside one SQLite transaction; failure rollback is tested. |
-| Phase 1 accounting scope | Defined; implementation pending | `PHASE1_ACCOUNTING_SCOPE.md` defines sales totals, acquisition cost, WAC, inventory valuation, COGS, and gross profit as the minimum accounting foundation. |
+| Phase 1 accounting scope | Defined | `PHASE1_ACCOUNTING_SCOPE.md` defines sales totals, acquisition cost, WAC, inventory valuation, COGS, and gross profit. |
+| Supplier / purchase receiving | Implemented on feature branch; CI pending | New form records supplier name, product, received quantity, and actual unit acquisition cost. Receipt header/items and stock movement are written atomically; selling price remains unchanged. |
+| WAC / inventory valuation / COGS | Not implemented/verified | Purchase costs are now recorded, but weighted-average cost, valuation, sale-cost posting, and gross-profit reporting remain pending. |
 | Acquisition cost / WAC / COGS | Not implemented/verified | Current evidence covers selling price, quantity, stock movements, and sales, but not verified acquisition-cost or WAC/COGS records. |
 | Web / desktop | Not started | After Android MVP. |
 | Crypto modules | Deferred | Must not delay traditional grocery operations. |
 
 ### Latest workflow evidence
 
-- **Latest CI passed:** [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485), commit `6fa2e53bfc94890f7a156df6073c635ae8641c4d`; 20 tests passed, including the legacy duplicate-name audit test, and split APKs were built and uploaded.
+- **Previous verified baseline:** [run #95](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40653105485), commit `6fa2e53bfc94890f7a156df6073c635ae8641c4d`; 20 tests passed, and split APKs were built and uploaded.
+- **Purchase receiving implementation CI:** [run #107](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40867505101), branch `feature/supplier-purchase-receiving`, commit `fdd8ea56f1a1438e88e75e3809dc6c208f86659b`; status pending at the time this dashboard was updated. New integration tests cover cost capture, stock updates, and rollback on over-cap receipt.
 - **Latest APK artifact:** `grocery-business-app-apks`, approximately 24.5 MB; the user confirmed the APK was installed and reported **ALL GREEN**.
 - Earlier payment-formatting/checkout evidence: [workflow #78](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40634553997).
 - Earlier stock-movement quantity-limit evidence: [workflow #84](https://github.com/JasonScottCManalo12/grocery-business-app/actions/runs/40639896925).
@@ -49,11 +52,12 @@ Delivery order: **Android APK → web → desktop**. Phase 1 is traditional groc
 - [x] Latest comma-formatting and Complete Sale checks passed.
 - [x] Offline/persistence acceptance: five reported checks passed, including offline operation, sale completion, reopening, and sale/stock/movement consistency.
 - [x] Workflow #95 CI passed with 20 tests and produced a split-APK artifact.
+- [ ] Purchase receiving: wait for workflow #107 CI result, then install/test the new APK on device.
 - [x] User confirmed the workflow #95 APK was installed and reported **ALL GREEN**.
 
 ## 4. Current recommendations
 
-1. **Next implementation: Supplier/Purchase Receiving.** Capture received quantity and actual acquisition/unit cost separately from product selling price. This is the required foundation for WAC.
+1. **Purchase receiving is now implemented on `feature/supplier-purchase-receiving`; verification is pending.** Capture received quantity and actual acquisition/unit cost separately from product selling price. CI and device acceptance must pass before treating it as complete.
 2. **Implement WAC after receiving exists.** Do not use selling price as acquisition cost. Test repeated receipts, different costs/quantities, zero stock, rounding, restart persistence, and sale/rollback behavior.
 3. **Implement inventory valuation, COGS, and gross profit** after WAC is reliable.
 4. **Decide expense/net-profit scope** only if explicitly accepted for Phase 1.
