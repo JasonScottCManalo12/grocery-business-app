@@ -37,7 +37,7 @@ class SaleRepository implements SaleStore {
       for (final entry in quantities.entries) {
         final rows = await txn.query(
           'products',
-          columns: ['id', 'name', 'price_cents', 'stock_quantity', 'is_active'],
+          columns: ['id', 'name', 'price_cents', 'stock_quantity', 'is_active', 'average_cost_cents'],
           where: 'id = ?',
           whereArgs: [entry.key],
           limit: 1,
@@ -64,11 +64,15 @@ class SaleRepository implements SaleStore {
         throw ArgumentError('Payment is less than the sale total.');
       }
 
+      final totalCogsCents = lines.every((line) => line.lineCostCents != null)
+          ? lines.fold<int>(0, (sum, line) => sum + line.lineCostCents!)
+          : null;
       final now = DateTime.now().toIso8601String();
       final saleId = await txn.insert('sales', {
         'created_at': now,
         'total_cents': totalCents,
         'payment_cents': paymentCents,
+        'total_cogs_cents': totalCogsCents,
       });
 
       for (final line in lines) {
@@ -85,6 +89,8 @@ class SaleRepository implements SaleStore {
           'quantity': line.quantity,
           'unit_price_cents': line.unitPriceCents,
           'line_total_cents': line.lineTotalCents,
+          'unit_cost_cents': line.unitCostCents,
+          'line_cost_cents': line.lineCostCents,
         });
         final updatedProductRows = await txn.query(
           'products',
@@ -111,6 +117,7 @@ class SaleRepository implements SaleStore {
         lines: lines,
         totalCents: totalCents,
         paymentCents: paymentCents,
+        totalCogsCents: totalCogsCents,
       );
     });
   }
@@ -134,11 +141,13 @@ class SaleRepository implements SaleStore {
         createdAt: DateTime.parse(sale['created_at'] as String),
         totalCents: sale['total_cents'] as int,
         paymentCents: sale['payment_cents'] as int,
+        totalCogsCents: sale['total_cogs_cents'] as int?,
         lines: rows.map((row) => SaleLine(
           productId: row['product_id'] as int,
           productName: row['product_name'] as String,
           quantity: row['quantity'] as int,
           unitPriceCents: row['unit_price_cents'] as int,
+          unitCostCents: row['unit_cost_cents'] as int?,
         )).toList(growable: false),
       ));
     }
